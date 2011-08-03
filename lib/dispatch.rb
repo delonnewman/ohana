@@ -1,17 +1,19 @@
+require File.join(File.dirname(__FILE__), 'process')
+
 module Ohana
-  module Dispatch
+  class Dispatch
     attr_reader :process
 
     def initialize(process)
       @process = ::Ohana::Process.fetch(process)
     end
 
-    def receive(content)
-        @process.receive(content)
+    def receive(channel, message)
+      @process.receive(channel, message)
     end
 
-    def send(content)
-        @process.send(content)
+    def send(channel, message)
+      @process.send(channel, message)
     end
   end
 end

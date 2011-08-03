@@ -5,13 +5,31 @@ require 'dm-migrations'
 require 'uri'
 require 'net/http'
 
-DataMapper::Logger.new($stdout, :debug)
-DataMapper.setup(:default, "sqlite:///#{File.expand_path(File.join(File.dirname(__FILE__), '..', 'extra', 'process.db'))}")
+DataMapper::Logger.new(File.open('/tmp/ohana.log', 'a'), :debug)
+DataMapper.setup(:default, :adapter => 'sqlite', :path => File.expand_path(File.join(File.dirname(__FILE__), 'process.db')))
 
 module Ohana
   module Process
+    class ProcessError < RuntimeError; end
+    class SpecParseError < ProcessError; end
+
     def self.fetch(name)
-      Store.first(:name => name)
+      if p = Store.first(:name => name) then p
+      else
+        raise ProcessError, "Could not find process '#{name}'"
+      end
+    end
+
+    def self.list
+      Store.all.map { |x| x.to_json }.to_json
+    end
+
+    def self.add(process)
+      Store.create(process).to_json
+    end
+
+    def self.send_msg(msg)
+      fetch(msg.process).send_msg(msg.channel, msg.content)
     end
 
 	  class Spec
@@ -20,7 +38,7 @@ module Ohana
           s = Struct.new(*spec.keys.map { |k| k.to_sym })
           s.new(*spec.values)
         else
-          raise "Parse error: spec doesn't seem to be in the correct format: #{spec.inspect}"
+          raise SpecParseError, "spec doesn't seem to be in the correct format: #{spec.inspect}"
         end
       end
 	  end
@@ -46,22 +64,30 @@ module Ohana
 
       def channels; spec.channels end
 	
-	    def send(channel, message)
+	    def send_msg(channel, message)
 	      if not channels.include?(channel)
-	        raise "Invalid channel: #{name} process does not have channel " + 
+	        raise ProcessError, "Invalid channel: #{name} process does not have channel " + 
 	          "#{channel}: #{channels.join(', ')} are valid."
 	      end
 	    end
+
+      def to_json
+        { :id       => id,
+          :name     => name, 
+          :type     => type,
+          :spec_uri => spec_uri,
+          :version  => version  }.to_json
+      end
 	  end
 
 	
 	  class RESTful < Store
-	    def send(channel, message)
+		  def send_msg(channel, message)
         super(channel, message)
         if spec.respond_to?(:root_uri)
 	        Net::HTTP.post_form URI.parse("#{spec.root_uri}/channel/#{channel}"), { :message => message }
         else
-          raise "Spec error: spec must contain root_uri"
+          raise ProcessError, "spec must contain root_uri"
         end
 	    end
 	  end

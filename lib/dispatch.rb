@@ -4,16 +4,14 @@ module Ohana
   class Dispatch
     attr_reader :process
 
-    def initialize(process)
-      @process = ::Ohana::Process.fetch(process)
-    end
+    @@methods = {
+      'SEND' => lambda { |m| ::Ohana::Process.send_msg(m) },
+      'ADD'  => lambda { |p| ::Ohana::Process.add(p) },
+      'LIST' => lambda { |x| ::Ohana::Process.list }
+    }
 
-    def receive(channel, message)
-      @process.receive(channel, message)
-    end
-
-    def send(channel, message)
-      @process.send(channel, message)
+    def self.dispatch(request)
+      @@methods[request.method].call(request.content)
     end
   end
 end

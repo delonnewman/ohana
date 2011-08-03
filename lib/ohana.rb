@@ -15,6 +15,13 @@ module Ohana
       @@log ||= Logger.new('/tmp/ohana.log')
     end
 
+    def self.exception(io, e)
+      msg = "#{e.class}: #{e.message} \n#{e.backtrace.join("\n")}"
+      log.error msg
+	    io.puts msg if io
+      puts msg unless io
+    end
+
     def self.options(args)
 			options = { :daemonize => false }
       args.each do |arg|
@@ -33,8 +40,6 @@ module Ohana
       acceptor.bind(address)
       acceptor.listen(10)
 
-      @@pid = $$
-
       trap('EXIT') { acceptor.close }
 
       WORKERS.times do
@@ -44,12 +49,23 @@ module Ohana
           puts "child #$$ accepting on shared socket (#{HOST}:#{PORT})"
 		      loop {
 		        sock, addr = acceptor.accept
-		        msg = Message.parse(sock.gets)
-		        log.info("MESSAGE: #{msg.inspect}")
-		        log.info("DISPATCHED: #{msg.dispatch}")
-		        sock.write Time.now
+            begin
+		          req = Request.parse(sock.gets)
+		          log.info("REQUEST: #{req.inspect}")
+              puts "REQUEST: #{req.inspect}"
+	            begin
+	              d = req.dispatch
+			          log.info("DISPATCHED: #{d.inspect}")
+                sock.puts d
+	            rescue => e
+                exception sock, e
+	            end
+            rescue => e
+              exception sock, e
+            end
+		        sock.puts Time.now
 		        sock.close
-            puts "child #$$: #{msg.inspect}"
+            puts "child #$$: #{req.inspect}"
 		      }
           exit
         end
@@ -61,22 +77,54 @@ module Ohana
     end
   end
 
+  class RequestError < RuntimeError; end
+  class InvalidMethod < RequestError; end
+  class MessageError < RequestError; end
+
+  class Request
+    attr_reader :method, :content
+
+    @@methods = %w{ SEND ADD LIST }
+
+    def initialize(method, content)
+      @method  = method  || raise(RequestError, "method cannot be nil")
+      @content = content
+
+      unless @@methods.include?(@method)
+        raise InvalidMethod, "'#{method}', #{@@methods.join(', ')} are valid."
+      end
+
+      if (method == 'SEND' or method == 'ADD') and content.nil?
+        raise RequestError, "SEND and ADD requests must have content"
+      end
+
+      @content = Message.parse(content) if content && method == 'SEND'
+    end
+
+    def self.parse(str)
+      p str
+      req = JSON.parse(str)
+      p req
+      new(req['method'], req['content'])
+    end
+
+    def dispatch
+      Dispatch.dispatch(self)
+    end
+  end
+
   class Message
     attr_reader :process, :channel, :content
 
     def initialize(process, channel, content)
-      @process = process || raise("Request error: process cannot be nil")
-      @channel = channel || raise("Request error: channel cannot be nil")
-      @content = content || raise("Request error: content cannot be nil")
+      @process = process || raise(MessageError, "process cannot be nil")
+      @channel = channel || raise(MessageError, "channel cannot be nil")
+      @content = content || raise(MessageError, "content cannot be nil")
     end
 
     def self.parse(str)
-      msg = JSON.parse(str)
+      msg = if str.is_a?(Hash) then str else JSON.parse(str) end
       new(msg['process'], msg['channel'], msg['content'])
-    end
-
-    def dispatch
-      Dispatch.new(@process).send(@channel, @content)
     end
   end
 end

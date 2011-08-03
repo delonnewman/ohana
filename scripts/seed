@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'process'))
+
+unless Ohana::Process.fetch('echo')
+  p Ohana::Process::RESTful.create(:name => 'echo', :spec_uri => 'http://locahost:4567/process.json')
+end

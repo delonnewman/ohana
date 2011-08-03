@@ -8,7 +8,16 @@ end
 
 # channel '/say'  { }
 post '/channel/say' do
-  puts params[:message]
+  msg = params[:message]
+  puts msg
+  case msg
+  when 'miredita' then puts "Are you Albanian?"
+  when 'hola'     then puts "Do you speak Spanish?"
+  when 'hello'    then puts "Oh, you speak English"
+  else
+    puts "I'm sorry, I don't know what you're talking about."
+  end
+  
   "OK".to_json
 end
 

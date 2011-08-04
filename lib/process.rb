@@ -25,7 +25,11 @@ module Ohana
     end
 
     def self.add(process)
-      Store.create(process).to_json
+      begin
+        Store.create(process).to_json
+      rescue DataObjects::IntegrityError
+        Store.first(:name => process['name']).to_json
+      end
     end
 
     def self.send_msg(msg)
@@ -85,7 +89,8 @@ module Ohana
 		  def send_msg(channel, message)
         super(channel, message)
         if spec.respond_to?(:root_uri)
-	        Net::HTTP.post_form URI.parse("#{spec.root_uri}/channel/#{channel}"), { :message => message }
+	        res = Net::HTTP.post_form URI.parse("#{spec.root_uri}/channel/#{channel}"), { :message => message }
+          res.body
         else
           raise ProcessError, "spec must contain root_uri"
         end

@@ -5,7 +5,9 @@ require "#{$lib}/ohana"
 require "#{$lib}/client"
 require 'json'
 
-unless Ohana::Process.fetch('test')
+begin
+  Ohana::Process.fetch('test')
+rescue
   Ohana::Process::RESTful.create(:name => 'test', :spec_uri => 'http://localhost:4567/process.json')
 end
 

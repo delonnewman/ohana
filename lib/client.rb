@@ -1,16 +1,11 @@
-require File.join(File.dirname(__FILE__), 'ohana')
 require 'socket'
 
 module Ohana
   @@socket = nil
 
   def self.connect(host, port)
-    begin
-      @@socket ||= TCPSocket.new(host, port)
-      true
-    rescue
-      false
-    end
+    @@socket.close if @@socket
+    @@socket = TCPSocket.open(host, port)
   end
 
   def self.disconnect
@@ -19,20 +14,20 @@ module Ohana
   end
 
   def self.request(method, content=nil)
-    begin
-      req = { :method  => method,
-              :content => content }.to_json
+    req = { :method  => method,
+            :content => content }.to_json
 
-      if @@socket
-        @@socket.write(req)
-        true
-      else
-        raise "A connection has not been established"
+    if @@socket
+      @@socket.write(req)
+
+      buff = ""
+      while ( (data = @@socket.recvfrom(100)) != "")
+        p data
+        buff += data
       end
-
-    rescue
-      raise $!
-      false
+      buff
+    else
+      raise "A connection has not been established"
     end
   end
 

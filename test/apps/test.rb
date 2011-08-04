@@ -8,17 +8,17 @@ end
 
 # channel '/say'  { }
 post '/channel/say' do
-  msg = params[:message]
-  puts msg
-  case msg
-  when 'miredita' then puts "Are you Albanian?"
-  when 'hola'     then puts "Do you speak Spanish?"
-  when 'hello'    then puts "Oh, you speak English"
-  else
-    puts "I'm sorry, I don't know what you're talking about."
-  end
+  content_type 'text/html'
+
+  @msg = params[:message]
+  puts @msg
+  @questions = {
+    'miredita' => "Are you Albanian?",
+    'hola'     => "Do you speak Spanish?",
+    'hello'    => "Oh, you speak English"
+  }
   
-  "OK".to_json
+  haml :say
 end
 
 # automatically generated
@@ -28,3 +28,14 @@ get '/process.json' do
     :channels => %w{ say },
     :root_uri => 'http://localhost:4567' }.to_json
 end
+
+__END__
+
+@@ layout
+%html
+  = yield
+
+@@ say
+%h1= @msg
+
+#message= @questions[@msg] || "I'm sorry I don't know what you're talking about"

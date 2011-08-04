@@ -18,8 +18,11 @@ module Ohana
     def self.exception(io, e)
       msg = "#{e.class}: #{e.message} \n#{e.backtrace.join("\n")}"
       log.error msg
-	    io.puts msg if io
-      puts msg unless io
+	    begin
+        io.puts msg
+      rescue
+        puts msg
+      end
     end
 
     def self.options(args)
@@ -63,7 +66,6 @@ module Ohana
             rescue => e
               exception sock, e
             end
-		        sock.puts Time.now
 		        sock.close
             puts "child #$$: #{req.inspect}"
 		      }
@@ -102,9 +104,7 @@ module Ohana
     end
 
     def self.parse(str)
-      p str
       req = JSON.parse(str)
-      p req
       new(req['method'], req['content'])
     end
 

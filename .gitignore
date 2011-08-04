@@ -1,1 +1,4 @@
 *.sw*
+pkg/
+lib/process.db
+Gemfile.lock

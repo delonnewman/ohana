@@ -61,6 +61,11 @@ module Ohana
       raise ArgumentError, "'#{method}' is not valid. Valid methods include '#{@@methods.join(', ')}'."
     end
 
+    if content.is_a?(String)
+      # let parsing errors fly!
+      content = JSON.parse(content)
+    end
+
     Ohana::Client.run @@host, @@port, { :method => method, :content => content }.to_json
   end
 

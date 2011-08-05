@@ -1,7 +1,12 @@
 #!/usr/bin/env ruby
 $:.unshift File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'ohana/client'
+require 'json'
 
 unless ARGV.size >= 1; puts "Usage: #$0 SEND|LIST|ADD [CONTENT]"; exit end
 
-p Ohana.request(*ARGV)
+if (ARGV.first == 'SEND' || ARGV.first == 'ADD') && ARGV.size < 2
+  puts "SEND and ADD requests must have content"
+end
+
+puts Ohana.request(*ARGV).to_json

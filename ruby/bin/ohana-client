@@ -2,4 +2,6 @@
 $:.unshift File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'ohana/client'
 
-Ohana.request(*ARGV)
+unless ARGV.size >= 1; puts "Usage: #$0 SEND|LIST|ADD [CONTENT]"; exit end
+
+p Ohana.request(*ARGV)

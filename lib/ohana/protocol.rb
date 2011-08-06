@@ -18,6 +18,8 @@ module Ohana
 	        unless j.respond_to?(:[]) && j.respond_to?(:keys)
 	          raise RequestError, "It doesn't seem like the request was parsed correctly"
 	        end
+
+          dispatch(j)
 	      end
       end
 
@@ -53,12 +55,10 @@ module Ohana
 	      }
 
         if j['method'] && (methods = @@dispatch.keys).include?(j['method'])
-          dispatch[j['method']].call(j)
+          @@dispatch[j['method']].call(j)
         else
           raise RequestError, "'#{j['method']}' is invalid.  '#{method.join(', ')}' are valid." 
         end
-
-        @@dispatch[j['method']].call(j)
       end
 
       def self.prop(name, opts={})
@@ -77,6 +77,18 @@ module Ohana
           @from     = args['from']      || raise(RequestError, 'from cannot be nil')
           @reply_to = args['reply_to']
           @message  = args['message']   || raise(RequestError, 'message cannot be nil')
+        end
+
+        def to
+          ::Ohana::Protocol::Location.new(@to)
+        end
+
+        def from
+          ::Ohana::Protocol::Location.new(@from)
+        end
+
+        def reply_to
+          ::Ohana::Protocol::Location.new(@reply_to) if @reply_to
         end
       end
 

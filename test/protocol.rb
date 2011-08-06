@@ -79,7 +79,11 @@ class TestSend < Test::Unit::TestCase
                 :reply_to => { :process => 'sleeper', :channel => 'say' },
                 :message => 'Aloha!' }.to_json
 
-    request = Ohana::Protocol::Request.parse(@json)
+    self.request = Ohana::Protocol::Request.parse(@json)
+  end
+
+  def test_nil
+    assert_not_nil Ohana::Protocol::Request.parse(@json)
   end
 end
 
@@ -91,7 +95,7 @@ class TestList < Test::Unit::TestCase
 
   def setup
     @json = '{"method":"LIST"}'
-    request = Ohana::Protocol::Request.parse(@json)
+    self.request = Ohana::Protocol::Request.parse(@json)
   end
 end
 
@@ -112,6 +116,6 @@ class TestAdd < Test::Unit::TestCase
         "name":"echo",
         "spec":"http://localhost:4567/process.json"}
     JSON
-    request = Ohana::Protocol::Request.parse(@json)
+    self.request = Ohana::Protocol::Request.parse(@json)
   end
 end

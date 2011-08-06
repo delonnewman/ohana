@@ -85,6 +85,17 @@ class TestSend < Test::Unit::TestCase
   def test_nil
     assert_not_nil Ohana::Protocol::Request.parse(@json)
   end
+
+  def test_reply_to_nil
+    json = { :method => 'SEND',
+                :to => { :process => 'echo', :channel => 'say' },
+                :from => { :process => 'sleeper', :channel => 'sleep' },
+                :message => 'Aloha!' }.to_json
+
+    req = Ohana::Protocol::Request.parse(json)
+
+    assert_equal nil, req.reply_to
+  end
 end
 
 class TestList < Test::Unit::TestCase

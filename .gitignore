@@ -1,4 +1,4 @@
 *.sw*
 pkg/
-lib/server/process.db
+lib/ohana/server/process.db
 Gemfile.lock

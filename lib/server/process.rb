@@ -96,6 +96,18 @@ module Ohana
         end
 	    end
 	  end
+
+    class IO
+      def send_msg(channel, message)
+        p channel
+        if channel.respond_to?(:write)
+          channel.write(message)
+        else
+          raise ArgumentError,
+            "channel must be an IO instance: it is #{channel.class}"
+        end
+      end
+    end
   end
 end
 

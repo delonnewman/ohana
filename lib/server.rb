@@ -38,10 +38,17 @@ module Ohana
     def self.run(args=[])
       ::Process.daemon if options(args)[:daemonize]
 
-      acceptor = Socket.new(:INET, :STREAM, 0)
-      address  = Socket.pack_sockaddr_in(PORT, HOST)
-      acceptor.bind(address)
-      acceptor.listen(10)
+      begin
+        acceptor = Socket.new(:INET, :STREAM, 0)
+        address  = Socket.pack_sockaddr_in(PORT, HOST)
+        acceptor.bind(address)
+        acceptor.listen(10)
+      rescue Errno::EADDRINUSE => e
+        puts "'#{HOST}:#{PORT}' is already in use"
+        exit
+      rescue
+        raise $!
+      end
 
       trap('EXIT') { acceptor.close }
 

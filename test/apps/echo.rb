@@ -8,8 +8,6 @@ end
 
 # channel '/say'  { }
 post '/channel/say' do
-  content_type 'text/html'
-
   @msg = params[:message]
   puts @msg
   @questions = {
@@ -18,24 +16,14 @@ post '/channel/say' do
     'hello'    => "Oh, you speak English"
   }
   
-  haml :say
+  #reply @questions[@msg] || "I'm sorry I dont' know what you're talking about" 
+  { process: 'echo', channel: 'say', content: (@questions[@msg] || "I'm sorry I don't know what you're talking about") }.to_json
 end
 
 # automatically generated
 get '/process.json' do
-  { :name => 'test',
+  { :name => 'echo',
     :version => 1,
     :channels => %w{ say },
     :root_uri => 'http://localhost:4567' }.to_json
 end
-
-__END__
-
-@@ layout
-%html
-  = yield
-
-@@ say
-%h1= @msg
-
-#message= @questions[@msg] || "I'm sorry I don't know what you're talking about"

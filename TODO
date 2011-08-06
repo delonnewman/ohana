@@ -1,3 +1,7 @@
-- Write a .Net client
-- Write a python client
-- Write a Perl client
+- clients:
+  - Sinatra (admin interface)
+  - JavaScript (WebSockets)
+        - will need to write websockets server as proxy
+  - .NET
+  - Python
+  - Perl

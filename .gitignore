@@ -1,4 +1,4 @@
 *.sw*
 pkg/
-lib/process.db
+lib/server/process.db
 Gemfile.lock

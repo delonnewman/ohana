@@ -1,0 +1,26 @@
+# Jeweler
+pkg = 'ohana-client'.freeze
+
+begin
+  require 'jeweler'
+  Jeweler::Tasks.new do |spec|
+    spec.name        = pkg
+    spec.summary     = "A lightweight Pi-Calculus based process management system"
+    spec.description = spec.summary
+    spec.email       = "drnewman@phrei.org"
+    spec.homepage    = "http://phrei.org"
+    spec.authors     = %w{Delon Newman}
+
+    # Dependecies
+    spec.add_development_dependency('jeweler')
+		spec.add_dependency('json')
+  end
+rescue LoadError
+  puts "Jeweler not available.  Install it with: gem install jeweler"
+end
+
+desc "Push changes to git and deploy to system"
+task :deploy do
+	sh "git push"
+	sh "sudo ggem #{pkg}"
+end

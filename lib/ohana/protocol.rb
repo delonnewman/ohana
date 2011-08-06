@@ -1,25 +1,26 @@
 require 'json'
+require 'uri'
 
 module Ohana
   module Protocol
     module Parser
       module ClassMethods
-	      def dispatch(j)
-	        new(j)
+	      def dispatch(hash)
+	        new(hash)
 	      end
 	
 	      def parse(json)
-	        j = begin
+	        hash = begin
 	          JSON.parse(json)
 	        rescue => e
-	          raise RequestError, e
+	          raise ProtocolError, e
 	        end
 	        
-	        unless j.respond_to?(:[]) && j.respond_to?(:keys)
-	          raise RequestError, "It doesn't seem like the request was parsed correctly"
+	        unless hash.respond_to?(:[]) && hash.respond_to?(:keys)
+	          raise ProtocolError, "It doesn't seem like the request was parsed correctly"
 	        end
 
-          dispatch(j)
+          dispatch(hash)
 	      end
       end
 
@@ -34,8 +35,38 @@ module Ohana
       include Parser
       attr_reader :process, :channel
       def initialize(args)
-        @process = args['process'] || raise(RequestError, "process cannot be nil")
-        @channel = args['channel'] || raise(RequestError, "channel cannot be nil")
+        @process = args['process'] || raise(ProtocolError, "process cannot be nil")
+        @channel = args['channel'] || raise(ProtocolError, "channel cannot be nil")
+      end
+    end
+
+    class Process
+      include Parser
+      attr_reader :name, :uri
+      def initialize(args)
+        @name = args['name']
+        @spec = args['spec']
+        @uri  = args['uri']
+
+        if !@name && !@spec && !@uri
+          raise ProtocolError, "Process must be identified by name, spec or uri: spec: " + 
+            "#{@spec.inspect}, name: #{@name.inspect} :uri #{@uri.inspect}"
+        end
+      end
+
+      def spec
+        @ps ||= ProcessSpec.new(@spec) if @spec
+      end
+    end
+
+    class ProcessSpec
+      include Parser
+      attr_reader :name, :version, :type, :channels
+      def initialize(args)
+        @name     = args['name']     || raise(ProtocolError, "name cannot be nil")
+        @version  = args['version']
+        @type     = args['type']     || raise(ProtocolError, "type cannot be nil")
+        @channels = args['channels'] || raise(ProtocolError, "channels cannot be nil")
       end
     end
 
@@ -70,7 +101,7 @@ module Ohana
       end
 
       class Send < Request
-        attr_reader :to, :from, :reply_to, :message
+        attr_reader :message
         def initialize(args)
           super(args)
           @to       = args['to']        || raise(RequestError, "to cannot be nil")

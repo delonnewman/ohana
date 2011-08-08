@@ -15,7 +15,7 @@ module Ohana
       include Parser
       attr_reader :name, :uri
       def initialize(args)
-        @name = args['name']
+        @name = args['process'] || args['name'] || raise(ProtocolError, "name cannot be nil")
         @spec = args['spec']
         @uri  = args['uri']
 
@@ -24,6 +24,8 @@ module Ohana
             "#{@spec.inspect}, name: #{@name.inspect} :uri #{@uri.inspect}"
         end
       end
+
+      alias process name
 
       def spec
         @ps ||= ProcessSpec.new(@spec) if @spec

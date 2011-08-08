@@ -1,0 +1,158 @@
+<html xmlns:tomboy="http://beatniksoftware.com/tomboy" xmlns:link="http://beatniksoftware.com/tomboy/link" xmlns:size="http://beatniksoftware.com/tomboy/size"><head><META http-equiv="Content-Type" content="text/html; charset=utf-8"><title>Ohana Protocol</title><style type="text/css">
+        
+	body { font-family:'Liberation Serif'; }
+	h1 { font-size: xx-large;
+     	     font-weight: bold;
+     	     border-bottom: 1px solid black; }
+	div.note {
+		   position: relative;
+		   display: block;
+		   padding: 5pt;
+		   margin: 5pt; 
+		   white-space: -moz-pre-wrap; /* Mozilla */
+ 	      	   white-space: -pre-wrap;     /* Opera 4 - 6 */
+ 	      	   white-space: -o-pre-wrap;   /* Opera 7 */
+ 	      	   white-space: pre-wrap;      /* CSS3 */
+ 	      	   word-wrap: break-word;      /* IE 5.5+ */ }
+	</style></head><body><div class="note" id="Ohana Protocol"><a name="ohana protocol"></a><h1>Ohana Protocol</h1>
+<b><span style="font-size:large">Requests</span></b>
+
+<b>Methods</b>
+<ul><li dir="ltr"><span style="font-family:monospace">SEND</span> - Send message to process
+</li><li dir="ltr"><span style="font-family:monospace">LIST</span> - List all process in process store
+</li><li dir="ltr"><span style="font-family:monospace">ADD</span> - Add a process to process store
+</li><li dir="ltr"><span style="font-family:monospace">GET</span> - Retrieve a process' spec
+</li><li dir="ltr"><span style="font-family:monospace">REMOVE</span> - Remove a process from process store</li></ul>
+
+<b><span style="font-family:monospace">SEND</span></b><span style="font-family:monospace">
+{"method":"SEND",
+</span>	<span style="font-family:monospace">"to": LOCATION,
+</span>	<span style="font-family:monospace">"from": LOCATION,
+</span>	<span style="font-family:monospace">"reply_to": LOCATION,
+</span>	<span style="font-family:monospace">"message":</span> <span style="font-family:monospace">MESSAGE_CONTENT }</span>
+
+<b><span style="font-family:monospace">LIST</span></b><span style="font-family:monospace">
+{"method":"LIST"}
+
+<b>ADD
+</b></span><span style="font-family:monospace">{"method":"ADD",
+</span>	<span style="font-family:monospace">"type": PROCESS_TYPE,</span>
+	<span style="font-family:monospace">"name": PROCESS_NAME,
+</span>	<span style="font-family:monospace">"spec": PROCESS_SPEC|PROCESS_URI }
+
+<b>GET</b></span><span style="font-family:monospace">
+{"method":"GET", "process":PROCESS_NAME }
+
+<b>REMOVE
+</b></span><span style="font-family:monospace">{"method":"REMOVE", "process": PROCESS_NAME }</span>
+
+<b><span style="font-size:large">Response</span></b>
+<span style="font-size:large">
+</span><b>Statuses</b>
+<ul><li dir="ltr"><span style="font-family:monospace">AWAIT</span> - message received successfully, set processes to receive message from process
+</li><li dir="ltr"><span style="font-family:monospace">NORESPONSE</span> - message received successfully, but no response from other process
+</li><li dir="ltr"><span style="font-family:monospace">ERROR</span> - error receiving or processing message</li></ul>
+
+<b>Basic Response</b>
+<span style="font-family:monospace">{"status": STATUS,
+</span>	<span style="font-family:monospace">"to": LOCATION,
+</span>	<span style="font-family:monospace">"from": LOCATION }
+
+<b>AWAIT</b></span>
+<span style="font-family:monospace">{"status": "AWAIT", "channel": RECEIVING_CHANNEL }
+
+<b>NORESPONSE</b></span><span style="font-family:monospace">
+{"status":"NORESPONSE"}
+
+<b>ERROR</b></span><span style="font-family:monospace">
+{"status":"ERROR", "message": ERROR_MESSAGE }
+</span>
+<b><span style="font-size:large">Location</span></b><span style="font-family:monospace">
+</span>A URI for channels represented as <span style="font-family:monospace">PROCESS/CHANNEL_NAME</span> in string format
+ex: <a style="color:#204A87" href="#ohana">ohana</a><span style="font-family:monospace">://echo/say
+
+<b>LOCATION</b></span><span style="font-family:monospace">
+{"process":PROCESS, "channel":CHANNEL_NAME}
+</span>
+<b><span style="font-size:large">Process</span></b>
+
+Processes can be defined by name (to be retrieved from process store), or by spec.
+
+<span style="font-family:monospace">{"process":
+</span>	<span style="font-family:monospace">{"name":PROCESS_NAME}|
+</span>	<span style="font-family:monospace">{"spec":PROCESS_SPEC}|
+</span>	<span style="font-family:monospace">{"uri":PROCESS_URI} }</span>
+
+<b><span style="font-family:monospace">PROCESS_NAME
+</span></b><span style="font-family:monospace">STRING</span> (any string that matches <span style="font-family:monospace">/[a-zA-Z0-9_]/</span>)<span style="font-family:monospace">
+
+<b>PROCESS_URI
+</b></span><span style="font-family:monospace">STRING</span> (any valid URI), must refer to a valid <span style="font-family:monospace">PROCESS_SPEC</span>
+
+<b><span style="font-family:monospace">PROCESS_SPEC
+</span></b><span style="font-family:monospace">{"name":PROCESS_NAME,
+</span>	<span style="font-family:monospace">"version":INTEGER,
+</span>	<span style="font-family:monospace">"type":PROCESS_TYPE
+</span>	<span style="font-family:monospace">"channels": [CHANNEL] }
+
+</span><b><span style="font-size:large">Channel</span></b><span style="font-family:monospace">
+
+<b>CHANNEL</b></span><span style="font-family:monospace"> 
+{CHANNEL_NAME:CHANNEL_TYPE}
+
+<b>CHANNEL_NAME
+</b></span><span style="font-family:monospace">STRING</span> (any valid indicator, see <span style="font-family:monospace">PROCESS_NAME</span>)
+
+<b><span style="font-family:monospace">CHANNEL_TYPE
+</span></b><span style="font-family:monospace">STRING</span> (type signature)
+
+See <a style="color:#204A87" href="#ohana">Ohana</a>, <a style="color:#204A87" href="#ohana process types">Ohana Process Types</a></div>
+<div class="note" id="Ohana"><a name="ohana"></a><h1>Ohana</h1>
+Process base contains a url to <span style="font-family:monospace">process.json</span> and a cached version of the process description
+
+<span style="font-family:monospace">process.json
+{
+	'process': 'steno',
+	'version': '5b91a9539c18d53adae347a6d646e4631eed5526',
+	'channels': {
+		'recieve': { 
+			'participant': {
+				'_type_': 'Participant',
+				'first_name', 'string',
+				'last_name', 'string',
+				...
+			}
+			'note': [
+			  { 'text': 'string' },
+			  { 'pid': 'string' }
+			]	
+		},
+		'send': {
+			'pid_list': [ 'string' ]
+		}
+	}
+}</span>
+
+in application
+
+<span style="font-family:monospace">Ohana.send :steno do |p|
+  p.note(:pid  =&gt; '2342432',
+	 :text =&gt; "I know I'm supposed to be professional but this guy is nuts")
+end
+
+or
+
+<a style="color:#204A87" href="#q">Q</a></span><span style="font-family:monospace">.connect('ohana://localhost')
+<a style="color:#204A87" href="#q">Q</a></span><span style="font-family:monospace">(:steno).note!(:pid  =&gt; '2342432', :text =&gt; "I know I'm supposed to be professional but this guy is nuts")</span>
+
+See 
+<ul><li dir="ltr"><a style="color:#204A87" href="#ohana rest process api">Ohana REST Process API</a>
+</li><li dir="ltr"><a style="color:#204A87" href="#ohana class structrue">Ohana Class Structrue</a>
+</li><li dir="ltr"><a style="color:#204A87" href="#ohana protocol">Ohana Protocol</a>
+</li><li dir="ltr"><a style="color:#204A87" href="#ohana process types">Ohana Process Types</a></li></ul></div>
+<div class="note" id="Ohana Process Types"><a name="ohana process types"></a><a style="color:#204A87" href="#ohana">Ohana</a><h1> Process Types</h1>
+<ul><li dir="ltr"><span style="font-family:monospace">RESTful</span> - A webservice implementing the <a style="color:#204A87" href="#ohana rest process api">Ohana REST Process API</a>
+</li><li dir="ltr"><span style="font-family:monospace">Graph</span> - A directed graph specifying a process (a composition of other processes)
+</li><li dir="ltr"><span style="font-family:monospace">Script</span> - A server-side script using the <a style="color:#204A87" href="#ohana">Ohana</a> Client Library</li></ul>
+
+See <a style="color:#204A87" href="#ohana rest process api">Ohana REST Process API</a>, <a style="color:#204A87" href="#ohana client libriary">Ohana Client Libriary</a></div></body></html>

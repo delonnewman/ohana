@@ -10,7 +10,7 @@ module Ohana
       attr_reader :method
 
       def self.dispatch(j)
-	      @@dispatch ||= {
+	      @@dispatch = {
 	        'SEND'   => lambda { |j| Send.new(j) },
 	        'LIST'   => lambda { |j| List.new(j) },
 	        'ADD'    => lambda { |j| Add.new(j) },
@@ -21,12 +21,9 @@ module Ohana
         if j['method'] && (methods = @@dispatch.keys).include?(j['method'])
           @@dispatch[j['method']].call(j)
         else
-          raise RequestError, "'#{j['method']}' is invalid.  '#{method.join(', ')}' are valid." 
+          raise RequestError, "'#{j['method']}' is invalid.  " +
+            "'#{methods.join(', ')}' are valid." 
         end
-      end
-
-      def self.prop(name, opts={})
-        
       end
 
       def initialize(args)
@@ -35,6 +32,7 @@ module Ohana
 
       class Send < Request
         attr_reader :message
+
         def initialize(args)
           super(args)
           @to       = args['to']        || raise(RequestError, "to cannot be nil")
@@ -60,6 +58,7 @@ module Ohana
 
       class Add < Request
         attr_reader :type, :name, :spec
+
         def initialize(args)
           super(args)
           @type = args['type'] || raise(RequestError, "type cannot be nil")
@@ -70,6 +69,7 @@ module Ohana
 
       class Get < Request
         attr_reader :process
+
         def initialize(args)
           super(args)
           @process = args['process'] || raise(RequestError, "process cannot be nil")
@@ -78,6 +78,7 @@ module Ohana
 
       class Remove < Request
         attr_reader :process
+
         def initialize(args)
           super(args)
           @process = args['process'] || raise(RequestError, "process cannot be nil")

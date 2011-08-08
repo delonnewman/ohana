@@ -16,7 +16,7 @@ module Ohana
 	        end
 	        
 	        unless hash.respond_to?(:[]) && hash.respond_to?(:keys)
-	          raise ProtocolError, "It doesn't seem like the request was parsed correctly"
+	          raise ProtocolError, "It doesn't seem like the message was parsed correctly"
 	        end
 
           dispatch(hash)

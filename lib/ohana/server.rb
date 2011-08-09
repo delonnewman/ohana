@@ -4,11 +4,13 @@ require 'optparse'
 require 'json'
 
 require File.join(File.dirname(__FILE__), 'dispatch')
+$:.unshift('.') unless $:.include?('.')
+require 'protocol'
 
 module Ohana
-  HOST    = '127.0.0.1'.freeze
-  PORT    = 3141
-  WORKERS = 3
+  HOST = '127.0.0.1'.freeze
+  PORT = 3141
+  KIDS = 3
 
   class Server
     def self.log
@@ -52,7 +54,7 @@ module Ohana
 
       trap('EXIT') { acceptor.close }
 
-      WORKERS.times do
+      KIDS.times do
         fork do
           trap('INT') { exit }
 
@@ -60,7 +62,7 @@ module Ohana
 		      loop {
 		        sock, addr = acceptor.accept
             begin
-		          req = Request.parse(sock.gets)
+		          req = Protocol::Request.parse(sock.gets)
 		          log.info("REQUEST: #{req.inspect}")
               puts "REQUEST: #{req.inspect}"
 	            begin
@@ -83,55 +85,6 @@ module Ohana
       trap('INT') { puts "\ngoing down..."; exit }
 
       ::Process.waitall
-    end
-  end
-
-  class RequestError < RuntimeError; end
-  class InvalidMethod < RequestError; end
-  class MessageError < RequestError; end
-
-  class Request
-    attr_reader :method, :content
-
-    @@methods = %w{ SEND ADD LIST }
-
-    def initialize(method, content)
-      @method  = method  || raise(RequestError, "method cannot be nil")
-      @content = content
-
-      unless @@methods.include?(@method)
-        raise InvalidMethod, "'#{method}', #{@@methods.join(', ')} are valid."
-      end
-
-      if (method == 'SEND' or method == 'ADD') and content.nil?
-        raise RequestError, "SEND and ADD requests must have content"
-      end
-
-      @content = Message.parse(content) if content && method == 'SEND'
-    end
-
-    def self.parse(str)
-      req = JSON.parse(str)
-      new(req['method'], req['content'])
-    end
-
-    def dispatch
-      Dispatch.dispatch(self)
-    end
-  end
-
-  class Message
-    attr_reader :process, :channel, :content
-
-    def initialize(process, channel, content)
-      @process = process || raise(MessageError, "process cannot be nil")
-      @channel = channel || raise(MessageError, "channel cannot be nil")
-      @content = content || raise(MessageError, "content cannot be nil")
-    end
-
-    def self.parse(str)
-      msg = if str.is_a?(Hash) then str else JSON.parse(str) end
-      new(msg['process'], msg['channel'], msg['content'])
     end
   end
 end

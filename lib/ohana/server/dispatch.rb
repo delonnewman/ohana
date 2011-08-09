@@ -1,17 +1,29 @@
 require File.join(File.dirname(__FILE__), 'process')
 
 module Ohana
-  class Dispatch
-    attr_reader :process
+  def self.dispatch(message)
+    Dispatch::Request.new(message)  if message.is_a?(Ohana::Protocol::Request)
+    Dispatch::Response.new(message) if message.is_a?(Ohana::Protocol::Response)
+  end
+  
+  module Dispatch
+    class Request #< Dispatch
+      attr_reader :request
 
-    @@methods = {
-      'SEND' => lambda { |m| ::Ohana::Process.send_msg(m) },
-      'ADD'  => lambda { |p| ::Ohana::Process.add(p) },
-      'LIST' => lambda { |x| ::Ohana::Process.list }
-    }
+      def initialize(req)
+        @request = req
+      end
+    end
 
-    def self.dispatch(request)
-      @@methods[request.method].call(request.content)
+    class Response #< Dispatch
+      attr_reader :response
+
+      def initialize(res)
+        @response = res
+      end
+
+      def dispatch
+      end
     end
   end
 end

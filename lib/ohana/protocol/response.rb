@@ -88,17 +88,17 @@ module Ohana
         end
 
         def content
-          if @ccontent then @@ccontent
+          if @ccontent then @ccontent
           else
 	          content_types = {
-	            'String',    => lambda { @content.to_json },
-	            'Process',   => lambda { Process.new(@content) },
-	            '[Process]', => lambda { @content.map { Process.new(@content) } }
+	            'String'    => lambda { @content.to_json },
+	            'Process'   => lambda { Process.new(@content) },
+	            '[Process]' => lambda { @content.map { |c| Process.new(c) } }
 	          }
 	
-	          if content_types.include?(@content_type)
+	          unless (types = content_types.keys).include?(@content_type)
 	            raise ResponseError, "'#{@content_type}' is invalid, " +
-	              "'#{content_types.keys.join(', ')}' are valid content types."
+	              "'#{types.join(', ')}' are valid content types."
 	          end
 	
 	          @ccontent = content_types[@content_type].call

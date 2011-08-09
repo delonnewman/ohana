@@ -10,24 +10,28 @@ def response status, args={}
   { :status => status }.merge(args)
 end
 
-def await channel
-  response "AWAIT", :channel => channel
+def await channel, from, to
+  response "AWAIT", { :channel => channel }.merge(from).merge(to)
 end
 
-def no_response
-  response "NORESPONSE"
+def no_response from, to
+  response "NORESPONSE", from.merge(to)
 end
 
-def error type, msg
-  response "ERROR", :type => type, :message => msg
+def error type, msg, args={}
+  response "ERROR", { :type => type, :message => msg }.merge(args)
 end
 
-def process_error msg
-  error "PROCESS_ERROR", msg
+def process_error msg, from, to
+  error "PROCESS_ERROR", msg, from.merge(to)
 end
 
 def server_error msg
   error "SERVER_ERROR", msg
+end
+
+def ok content, content_type='String'
+  response "OK", :content => content, :content_type => content_type
 end
 
 # requests, methods
@@ -36,8 +40,8 @@ def request method, args={}
   { :method => method }.merge(args)
 end
 
-def send_msg message, args
-  request "SEND", args
+def send_msg message, from, to, reply_to={}
+  request "SEND", from.merge(to).merge(reply_to)
 end
 
 def list
@@ -54,4 +58,21 @@ end
 
 def remove process
   request "REMOVE", :process => process
+end
+
+def location(loc)
+  p, c = loc.split('/')
+  { :process => p, :channel => c  }
+end
+
+def from(loc)
+  { :from => location(loc) }
+end
+
+def to(loc)
+  { :to => location(loc) }
+end
+
+def reply_to(loc)
+  { :reply_to => location(loc) }
 end

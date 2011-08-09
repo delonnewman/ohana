@@ -11,10 +11,7 @@ class TestAwait < Test::Unit::TestCase
   prop 'channel', String
 
   def setup
-    @json = { :status => 'AWAIT',
-                :to => { :process => 'echo', :channel => 'say' },
-                :from => { :process => 'sleeper', :channel => 'sleep' },
-                :channel => 'say' }.to_json
+    @json = await('say', from('sleeper/sleep'), to('echo/say')).to_json
 
     self.response = Ohana::Protocol::Response.parse(@json)
   end
@@ -63,9 +60,8 @@ class TestNoResponse < Test::Unit::TestCase
   status 'NORESPONSE'
 
   def setup
-    @json = { :status => 'NORESPONSE',
-                :to => { :process => 'echo', :channel => 'say' },
-                :from => { :process => 'sleeper', :channel => 'sleep' } }.to_json
+    @json = no_response(from('sleeper/sleep'), to('echo/say')).to_json
+
     self.response = Ohana::Protocol::Response.parse(@json)
   end
 end
@@ -79,11 +75,8 @@ class TestError < Test::Unit::TestCase
   prop 'message', String, 'this is an error'
 
   def setup
-    @json = { :status => 'ERROR',
-                :type => 'PROCESS_ERROR',
-                :to => { :process => 'echo', :channel => 'say' },
-                :from => { :process => 'sleeper', :channel => 'sleep' },
-                :message => 'this is an error' }.to_json
+    @json = process_error('this is an error', from('sleeper/say'), to('echo/channel')).to_json
+
     self.response = Ohana::Protocol::Response.parse(@json)
   end
 
@@ -140,19 +133,19 @@ class TestOK < Test::Unit::TestCase
   prop 'content_type', String, 'String'
 
   def setup
-    @json = { :status => 'OK', :content => 'it worked out ok' }.to_json
+    @json = ok('it worked out ok').to_json
     self.response = Ohana::Protocol::Response.parse(@json)
   end
 
   def test_content_type_process
-    json = { :status => 'OK', :content_type => 'Process', :content => {:name => "echo"}  }.to_json
+    json = ok({:name => "echo"}, 'Process').to_json
     p    = Ohana::Protocol::Response.parse(json) 
     assert_equal 'Process', p.content_type
     assert_instance_of Ohana::Protocol::Process, p.content
   end
 
   def test_content_type_process
-    json = { :status => 'OK', :content_type => '[Process]', :content => [{:name => "echo"},{:name => 'sleeper'}]  }.to_json
+    json = ok([{:name => "echo"}, {:name => 'sleeper'}], '[Process]').to_json
     p    = Ohana::Protocol::Response.parse(json) 
     assert_equal '[Process]', p.content_type
     assert_instance_of Array, p.content

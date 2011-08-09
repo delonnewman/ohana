@@ -1,29 +1,40 @@
 require File.join(File.dirname(__FILE__), 'process')
+require File.join(File.dirname(__FILE__), '..', 'protocol')
 
 module Ohana
-  def self.dispatch(message)
-    Dispatch::Request.new(message)  if message.is_a?(Ohana::Protocol::Request)
-    Dispatch::Response.new(message) if message.is_a?(Ohana::Protocol::Response)
-  end
-  
-  module Dispatch
-    class Request #< Dispatch
-      attr_reader :request
-
-      def initialize(req)
-        @request = req
-      end
-    end
-
-    class Response #< Dispatch
-      attr_reader :response
-
-      def initialize(res)
-        @response = res
-      end
-
-      def dispatch
-      end
-    end
+  module Server
+	  class DispatchError < RuntimeError; end
+	  class Dispatch
+		  def self.message(req)
+		    Dispatch::Message.new(req).dispatch
+		  end
+		  
+	    class Message #< Dispatch
+	      attr_reader :request, :from, :to
+	
+	      def initialize(req)
+	        @request = req
+	        @from    = req.from
+	        @to      = req.to
+	      end
+	
+	      def dispatch
+	        if p = Process.fetch(@to.process)
+	          begin
+	            p.send_msg(@request.message)
+	          rescue => e
+	            begin
+	              p = Process.fetch(@from.process)
+	              p.send_msg(process_error(e))            
+	            rescue => e
+	              log.error(server_error(e))
+	            end
+	          end
+	        else
+	          raise DispatchError, "Could not find process: '#{@to.process}'"
+	        end
+	      end
+	    end
+	  end
   end
 end

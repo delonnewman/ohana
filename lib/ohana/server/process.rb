@@ -5,19 +5,18 @@ require 'dm-migrations'
 require 'uri'
 require 'net/http'
 
+$:.unshift('.') unless $:.include?('.')
+require '../protocol/basic'
+
 DataMapper::Logger.new(File.open('/tmp/ohana.log', 'a'), :debug)
 DataMapper.setup(:default, :adapter => 'sqlite', :path => File.expand_path(File.join(File.dirname(__FILE__), 'process.db')))
 
 module Ohana
   module Process
-    class ProcessError < RuntimeError; end
-    class SpecParseError < ProcessError; end
+    class ProcessStoreError < RuntimeError; end
 
     def self.fetch(name)
-      if p = Store.first(:name => name) then p
-      else
-        raise ProcessError, "Could not find process '#{name}'"
-      end
+      Store.first(:name => name)
     end
 
     def self.list
@@ -36,33 +35,28 @@ module Ohana
       fetch(msg.process).send_msg(msg.channel, msg.content)
     end
 
-	  class Spec
-      def self.parse(spec)
-        if spec.respond_to?(:keys)
-          s = Struct.new(*spec.keys.map { |k| k.to_sym })
-          s.new(*spec.values)
-        else
-          raise SpecParseError, "spec doesn't seem to be in the correct format: #{spec.inspect}"
-        end
-      end
-	  end
-	
 	  class Store
 	    include DataMapper::Resource
 	
 	    property :id,         Serial,        :key => true
       property :name,       String,        :required => true, :unique => true
 	    property :type,       Discriminator, :required => true
-	    property :spec_uri,   String,        :required => true
-	    property :spec_cache, Json
+	    property :uri,        String
+	    property :spec,       Json
 	    property :version,    String,        :required => true, :default => 1
+
+      before :save do
+        if !@uri && !@spec
+          raise ProcessStoreError, "URI or Spec must be specified: uri: #{@uri}, spec: #{@spec}"
+        end
+      end
 	
 	    def spec
-	      @spec ||= if spec_cache then Spec.parse(spec_cache)
+	      @spec ||= if spec_cache then ::Ohana::Protocol::ProcessSpec.parse(spec_cache)
 	                else
 	                  # fetch from spec_uri
 	                  update(:spec_cache => JSON.parse(Net::HTTP.get(URI.parse(spec_uri))))
-	                  Spec.parse(spec_cache)
+	                  ::Ohana::Protocol::ProcessSpec.parse(spec_cache)
 	                end
 	    end
 
@@ -70,7 +64,7 @@ module Ohana
 	
 	    def send_msg(channel, message)
 	      if not channels.include?(channel)
-	        raise ProcessError, "Invalid channel: #{name} process does not have channel " + 
+	        raise ProcessStoreError, "Invalid channel: #{name} process does not have channel " + 
 	          "#{channel}: #{channels.join(', ')} are valid."
 	      end
 	    end
@@ -79,7 +73,8 @@ module Ohana
         { :id       => id,
           :name     => name, 
           :type     => type,
-          :spec_uri => spec_uri,
+          :uri      => uri,
+          :spec     => spec,
           :version  => version  }.to_json
       end
 	  end
@@ -92,22 +87,10 @@ module Ohana
 	        res = Net::HTTP.post_form URI.parse("#{spec.root_uri}/channel/#{channel}"), { :message => message }
           res.body
         else
-          raise ProcessError, "spec must contain root_uri"
+          raise ProcessStoreError, "spec must contain root_uri"
         end
 	    end
 	  end
-
-    class IO
-      def send_msg(channel, message)
-        p channel
-        if channel.respond_to?(:write)
-          channel.write(message)
-        else
-          raise ArgumentError,
-            "channel must be an IO instance: it is #{channel.class}"
-        end
-      end
-    end
   end
 end
 

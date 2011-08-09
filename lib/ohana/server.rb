@@ -1,21 +1,17 @@
 require 'socket'
-require 'logger'
-require 'optparse'
-require 'json'
 
 require File.join(File.dirname(__FILE__), 'dispatch')
 $:.unshift('.') unless $:.include?('.')
 require 'protocol'
+require 'server/log'
 
 module Ohana
-  HOST = '127.0.0.1'.freeze
-  PORT = 3141
-  KIDS = 3
+  HOST     = '127.0.0.1'.freeze
+  PORT     = 3141
+  MAX_KIDS = 3
 
   class Server
-    def self.log
-      @@log ||= Logger.new('/tmp/ohana.log')
-    end
+    extend ::Ohana::Server::Log
 
     def self.exception(io, e)
       msg = "#{e.class}: #{e.message} \n#{e.backtrace.join("\n")}"
@@ -54,7 +50,7 @@ module Ohana
 
       trap('EXIT') { acceptor.close }
 
-      KIDS.times do
+      MAX_KIDS.times do
         fork do
           trap('INT') { exit }
 
@@ -64,16 +60,9 @@ module Ohana
             begin
 		          req = Protocol::Request.parse(sock.gets)
 		          log.info("REQUEST: #{req.inspect}")
-              puts "REQUEST: #{req.inspect}"
-	            begin
-	              d = req.dispatch
-			          log.info("DISPATCHED: #{d.inspect}")
-                sock.puts d
-	            rescue => e
-                exception sock, e
-	            end
+                Dispatch.message(req)
             rescue => e
-              exception sock, e
+              exception sock, server_error(e)
             end
 		        sock.close
             puts "child #$$: #{req.inspect}"

@@ -21,10 +21,7 @@ class TestAwait < Test::Unit::TestCase
   end
 
   def test_no_to
-    json = { :status => 'AWAIT',
-                :from => { :process => 'sleeper', :channel => 'sleep' },
-                :channel => 'say' }.to_json
-
+    json = await('say', from('sleeper/sleep'), {}).to_json
 
     assert_raise Ohana::Protocol::ResponseError do
       Ohana::Protocol::Response.parse(json)
@@ -32,10 +29,7 @@ class TestAwait < Test::Unit::TestCase
   end
 
   def test_no_from
-    json = { :status => 'AWAIT',
-                :to => { :process => 'sleeper', :channel => 'sleep' },
-                :channel => 'say' }.to_json
-
+    json = await('say', {}, to('echo/say')).to_json
 
     assert_raise Ohana::Protocol::ResponseError do
       Ohana::Protocol::Response.parse(json)
@@ -43,9 +37,7 @@ class TestAwait < Test::Unit::TestCase
   end
 
   def test_no_channel
-    json = { :status => 'AWAIT',
-                :to => { :process => 'echo', :channel => 'say' },
-                :from => { :process => 'sleeper', :channel => 'sleep' } }.to_json
+    json = await(nil, from('sleeper/sleep'), to('echo/say')).to_json
 
     assert_raise Ohana::Protocol::ResponseError do
       Ohana::Protocol::Response.parse(json)
@@ -64,6 +56,23 @@ class TestNoResponse < Test::Unit::TestCase
 
     self.response = Ohana::Protocol::Response.parse(@json)
   end
+
+
+  def test_without_to
+    json = no_response(from('sleeper/say'), {}).to_json
+
+    assert_raise Ohana::Protocol::ResponseError do 
+      Ohana::Protocol::Response.parse(json)
+    end
+  end
+
+  def test_without_from
+    json = no_response({}, to('echo/channel')).to_json
+
+    assert_raise Ohana::Protocol::ResponseError do 
+      Ohana::Protocol::Response.parse(json)
+    end
+  end
 end
 
 class TestError < Test::Unit::TestCase
@@ -81,34 +90,26 @@ class TestError < Test::Unit::TestCase
   end
 
   def test_send_error_without_to
-    @json = { :status => 'ERROR',
-                :type => 'PROCESS_ERROR',
-                :from => { :process => 'sleeper', :channel => 'sleep' },
-                :message => 'this is an error' }.to_json
+    json = process_error('this is an error', from('sleeper/say'), {}).to_json
 
     assert_raise Ohana::Protocol::ResponseError do 
-      Ohana::Protocol::Response.parse(@json)
+      Ohana::Protocol::Response.parse(json)
     end
   end
 
   def test_send_error_without_from
-    @json = { :status => 'ERROR',
-                :type => 'PROCESS_ERROR',
-                :to => { :process => 'echo', :channel => 'say' },
-                :message => 'this is an error' }.to_json
+    json = process_error('this is an error', {}, to('echo/channel')).to_json
 
     assert_raise Ohana::Protocol::ResponseError do 
-      Ohana::Protocol::Response.parse(@json)
+      Ohana::Protocol::Response.parse(json)
     end
   end
 
   def test_server_error_without_from_or_to
-    @json = { :status => 'ERROR',
-                :type => 'SERVER_ERROR',
-                :message => 'this is an error' }.to_json
+    json = server_error('this is an error').to_json
 
     assert_nothing_raised do
-      Ohana::Protocol::Response.parse(@json)
+      Ohana::Protocol::Response.parse(json)
     end
   end
 

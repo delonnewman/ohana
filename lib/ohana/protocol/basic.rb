@@ -40,6 +40,13 @@ module Ohana
         @version  = args['version']
         @type     = args['type']     || raise(ProtocolError, "type cannot be nil")
         @channels = args['channels'] || raise(ProtocolError, "channels cannot be nil")
+        args.each_pair do |k, v|
+          next if self.instance_variables.include?(:"@#{k}")
+          self.instance_variable_set(:"@#{k}", v)
+          self.class.send(:define_method, :"#{k}") do
+            self.instance_variable_get(:"@#{k}")
+          end
+        end
       end
     end
   end

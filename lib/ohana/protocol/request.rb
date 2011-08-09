@@ -57,13 +57,22 @@ module Ohana
       class List < Request; end
 
       class Add < Request
-        attr_reader :type, :name, :spec
+        attr_reader :type, :name, :uri
 
         def initialize(args)
           super(args)
           @type = args['type'] || raise(RequestError, "type cannot be nil")
           @name = args['name'] || raise(RequestError, 'name cannot be nil')
-          @spec = args['spec'] || raise(RequestError, 'spec cannot be nil')
+          @spec = args['spec']
+          @uri  = args['uri']
+
+          if !@spec && !@uri
+            raise RequestError, "must provide process spec or uri"
+          end
+        end
+
+        def spec
+          ProcessSpec.new(@spec) if @spec
         end
       end
 

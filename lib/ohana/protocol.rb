@@ -41,15 +41,15 @@ def request method, args={}
 end
 
 def send_msg message, from, to, reply_to={}
-  request "SEND", from.merge(to).merge(reply_to)
+  request "SEND", { :message => message }.merge(from).merge(to).merge(reply_to)
 end
 
 def list
   request "LIST"
 end
 
-def add args
-  request "ADD", args
+def add name, type, args
+  request "ADD", { :name => name, :type => type }.merge(args)
 end
 
 def get process
@@ -75,4 +75,8 @@ end
 
 def reply_to(loc)
   { :reply_to => location(loc) }
+end
+
+def spec name, type, args
+  { :spec => { :name => name, :type => type }.merge(args) }
 end

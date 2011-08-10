@@ -12,7 +12,13 @@ class TestSend < Test::Unit::TestCase
   prop 'message',  String, 'Aloha!'
 
   def setup
-    @json = send_msg('Aloha!', to('echo/channel'), from('sleeper/sleep'), reply_to('sleeper/say')).to_json
+    @json =<<-JSON
+      {"method":"SEND",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"},
+        "message":"Aloha!" }
+    JSON
 
     self.request = Ohana::Protocol::Request.parse(@json)
   end
@@ -22,15 +28,27 @@ class TestSend < Test::Unit::TestCase
   end
 
   def test_reply_to_nil
-    json = send_msg('Aloha!', to('echo/channel'), from('sleeper/sleep')).to_json
+    json =<<-JSON
+      {"method":"SEND",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "message": "Aloha!" }
+    JSON
 
-    req = Ohana::Protocol::Request.parse(json)
+    assert_nothing_raised do
+      @req = Ohana::Protocol::Request.parse(json)
+    end
 
-    assert_equal nil, req.reply_to
+    assert_equal nil, @req.reply_to
   end
 
   def test_no_to
-    json = send_msg('Aloha!', {}, from('sleeper/sleep')).to_json
+    json =<<-JSON
+      {"method":"SEND",
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"},
+        "message":"Aloha!" }
+    JSON
 
     assert_raise Ohana::Protocol::RequestError do
       Ohana::Protocol::Request.parse(json)
@@ -38,7 +56,12 @@ class TestSend < Test::Unit::TestCase
   end
 
   def test_no_from
-    json = send_msg('Aloha!', to('echo/channel'), {}).to_json
+    json =<<-JSON
+      {"method":"SEND",
+        "to": {"process":"echo", "channel":"say"},
+        "reply_to": {"process":"sleeper", "channel":"say"},
+        "message":"Aloha!" }
+    JSON
 
     assert_raise Ohana::Protocol::RequestError do
       Ohana::Protocol::Request.parse(json)
@@ -46,7 +69,12 @@ class TestSend < Test::Unit::TestCase
   end
 
   def test_no_message
-    json = send_msg(nil, to('echo/channel'), from('sleeper/sleep')).to_json
+    json =<<-JSON
+      {"method":"SEND",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"} }
+    JSON
 
     assert_raise Ohana::Protocol::RequestError do
       Ohana::Protocol::Request.parse(json)
@@ -61,7 +89,7 @@ class TestList < Test::Unit::TestCase
   method 'LIST'
 
   def setup
-    @json = list.to_json
+    @json = '{"method":"LIST"}'
     self.request = Ohana::Protocol::Request.parse(@json)
   end
 end
@@ -77,12 +105,22 @@ class TestAdd < Test::Unit::TestCase
   prop 'uri', String, 'http://localhost:4567/process.json'
 
   def setup
-    @json = add('echo', 'RESTful', :uri => 'http://localhost:4567/process.json').to_json
+    @json =<<-JSON
+      {"method":"ADD",
+        "name":"echo",
+        "type":"RESTful",
+        "uri": "http://localhost:4567/process.json" }
+    JSON
     self.request = Ohana::Protocol::Request.parse(@json)
   end
 
   def test_with_spec
-    json = add('echo', 'RESTful', spec('echo', 'RESTful', :root_uri => 'http://localhost:4567', :channels => ['say'])).to_json
+    json =<<-JSON
+      {"method":"ADD",
+        "name":"echo",
+        "type":"RESTful",
+        "spec": {"name":"echo","type":"RESTful", "root_uri":"http://localhost:4567","channels":["say"]} }
+    JSON
     req = Ohana::Protocol::Request.parse(json)
     assert_instance_of Ohana::Protocol::Request::Add, req
     assert_equal 'echo', req.name
@@ -97,7 +135,11 @@ class TestAdd < Test::Unit::TestCase
   end
 
   def test_with_no_spec_and_no_uri
-    json = add('echo', 'RESTful', {}).to_json
+    json =<<-JSON
+      {"method":"ADD",
+        "name":"echo",
+        "type":"RESTful" }
+    JSON
     
     assert_raise Ohana::Protocol::RequestError do
       Ohana::Protocol::Request.parse(json)
@@ -114,12 +156,17 @@ class TestGet < Test::Unit::TestCase
   prop 'process', String, 'echo'
 
   def setup
-    @json = get("echo").to_json
+    @json =<<-JSON
+      {"method":"GET",
+        "process":"echo" }
+    JSON
     self.request = Ohana::Protocol::Request.parse(@json)
   end
 
   def test_without_process
-    json = get(nil).to_json
+    json =<<-JSON
+      {"method":"GET"}
+    JSON
 
     assert_raise Ohana::Protocol::RequestError do
       Ohana::Protocol::Request.parse(json)
@@ -136,12 +183,17 @@ class TestRemove < Test::Unit::TestCase
   prop 'process', String, 'echo'
 
   def setup
-    @json = remove("echo").to_json
+    @json =<<-JSON
+      {"method":"REMOVE",
+        "process":"echo" }
+    JSON
     self.request = Ohana::Protocol::Request.parse(@json)
   end
 
   def test_without_process
-    json = remove(nil).to_json
+    json =<<-JSON
+      {"method":"REMOVE"}
+    JSON
 
     assert_raise Ohana::Protocol::RequestError do
       Ohana::Protocol::Request.parse(json)

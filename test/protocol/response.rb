@@ -8,10 +8,15 @@ class TestAwait < Test::Unit::TestCase
 
   prop 'to',      Ohana::Protocol::Location
   prop 'from',    Ohana::Protocol::Location
-  prop 'channel', String
+  prop 'channel', String, 'say'
 
   def setup
-    @json = await('say', from('sleeper/sleep'), to('echo/say')).to_json
+    @json =<<-JSON
+      {"status":"AWAIT",
+        "channel":"say",
+        "from": {"process":"sleeper", "channel":"sleep"},
+        "to": {"process":"echo", "channel":"say"} }
+    JSON
 
     self.response = Ohana::Protocol::Response.parse(@json)
   end
@@ -21,7 +26,11 @@ class TestAwait < Test::Unit::TestCase
   end
 
   def test_no_to
-    json = await('say', from('sleeper/sleep'), {}).to_json
+    json =<<-JSON
+      {"status":"AWAIT",
+        "channel":"say",
+        "from": {"process":"sleeper", "channel":"sleep"} }
+    JSON
 
     assert_raise Ohana::Protocol::ResponseError do
       Ohana::Protocol::Response.parse(json)
@@ -29,7 +38,12 @@ class TestAwait < Test::Unit::TestCase
   end
 
   def test_no_from
-    json = await('say', {}, to('echo/say')).to_json
+    json =<<-JSON
+      {"status":"AWAIT",
+        "channel":"say",
+        "to": {"process":"echo", "channel":"say"} }
+    JSON
+
 
     assert_raise Ohana::Protocol::ResponseError do
       Ohana::Protocol::Response.parse(json)
@@ -37,7 +51,11 @@ class TestAwait < Test::Unit::TestCase
   end
 
   def test_no_channel
-    json = await(nil, from('sleeper/sleep'), to('echo/say')).to_json
+    json =<<-JSON
+      {"status":"AWAIT",
+        "from": {"process":"sleeper", "channel":"sleep"},
+        "to": {"process":"echo", "channel":"say"} }
+    JSON
 
     assert_raise Ohana::Protocol::ResponseError do
       Ohana::Protocol::Response.parse(json)
@@ -51,15 +69,25 @@ class TestNoResponse < Test::Unit::TestCase
   type Ohana::Protocol::Response::NoResponse
   status 'NORESPONSE'
 
+  prop 'to',   Ohana::Protocol::Location
+  prop 'from', Ohana::Protocol::Location
+
   def setup
-    @json = no_response(from('sleeper/sleep'), to('echo/say')).to_json
+    @json =<<-JSON
+      {"status":"NORESPONSE",
+        "from": {"process":"sleeper", "channel":"sleep"},
+        "to": {"process":"echo", "channel":"say"} }
+    JSON
 
     self.response = Ohana::Protocol::Response.parse(@json)
   end
 
 
   def test_without_to
-    json = no_response(from('sleeper/say'), {}).to_json
+    json =<<-JSON
+      {"status":"NORESPONSE",
+        "from": {"process":"sleeper", "channel":"sleep"} }
+    JSON
 
     assert_raise Ohana::Protocol::ResponseError do 
       Ohana::Protocol::Response.parse(json)
@@ -67,7 +95,10 @@ class TestNoResponse < Test::Unit::TestCase
   end
 
   def test_without_from
-    json = no_response({}, to('echo/channel')).to_json
+    json =<<-JSON
+      {"status":"NORESPONSE",
+        "to": {"process":"echo", "channel":"say"} }
+    JSON
 
     assert_raise Ohana::Protocol::ResponseError do 
       Ohana::Protocol::Response.parse(json)
@@ -82,15 +113,29 @@ class TestError < Test::Unit::TestCase
   status 'ERROR'
 
   prop 'message', String, 'this is an error'
+  prop 'type',    String, 'PROCESS_ERROR'
+  prop 'to',      Ohana::Protocol::Location
+  prop 'from',    Ohana::Protocol::Location
 
   def setup
-    @json = process_error('this is an error', from('sleeper/say'), to('echo/channel')).to_json
+    @json =<<-JSON
+      {"status":"ERROR",
+        "type": "PROCESS_ERROR",
+        "message": "this is an error",
+        "from": {"process":"sleeper", "channel":"sleep"},
+        "to": {"process":"echo", "channel":"say"} }
+    JSON
 
     self.response = Ohana::Protocol::Response.parse(@json)
   end
 
   def test_send_error_without_to
-    json = process_error('this is an error', from('sleeper/say'), {}).to_json
+    json =<<-JSON
+      {"status":"ERROR",
+        "type": "PROCESS_ERROR",
+        "message": "this is an error",
+        "from": {"process":"sleeper", "channel":"sleep"} }
+    JSON
 
     assert_raise Ohana::Protocol::ResponseError do 
       Ohana::Protocol::Response.parse(json)
@@ -98,7 +143,12 @@ class TestError < Test::Unit::TestCase
   end
 
   def test_send_error_without_from
-    json = process_error('this is an error', {}, to('echo/channel')).to_json
+    json =<<-JSON
+      {"status":"ERROR",
+        "type": "PROCESS_ERROR",
+        "message": "this is an error",
+        "to": {"process":"echo", "channel":"say"} }
+    JSON
 
     assert_raise Ohana::Protocol::ResponseError do 
       Ohana::Protocol::Response.parse(json)
@@ -106,7 +156,11 @@ class TestError < Test::Unit::TestCase
   end
 
   def test_server_error_without_from_or_to
-    json = server_error('this is an error').to_json
+    json =<<-JSON
+      {"status":"ERROR",
+        "type": "SERVER_ERROR",
+        "message": "this is an error" }
+    JSON
 
     assert_nothing_raised do
       Ohana::Protocol::Response.parse(json)
@@ -114,12 +168,14 @@ class TestError < Test::Unit::TestCase
   end
 
   def test_with_invalid_error_type
-    @json = { :status => 'ERROR',
-                :type => 'INVALID_ERROR',
-                :message => 'this is an error' }.to_json
+    json =<<-JSON
+      {"status":"ERROR",
+        "type": "INVALID_ERROR",
+        "message": "this is an error" }
+    JSON
 
     assert_raise Ohana::Protocol::ResponseError do
-      Ohana::Protocol::Response.parse(@json)
+      Ohana::Protocol::Response.parse(json)
     end
   end
 end
@@ -134,20 +190,31 @@ class TestOK < Test::Unit::TestCase
   prop 'content_type', String, 'String'
 
   def setup
-    @json = ok('it worked out ok').to_json
+    @json =<<-JSON
+      {"status":"OK",
+        "content": "it worked out ok" }
+    JSON
     self.response = Ohana::Protocol::Response.parse(@json)
   end
 
   def test_content_type_process
-    json = ok({:name => "echo"}, 'Process').to_json
-    p    = Ohana::Protocol::Response.parse(json) 
+    json =<<-JSON
+      {"status":"OK",
+        "content": {"name":"echo"},
+        "content_type":"Process" }
+    JSON
+    p = Ohana::Protocol::Response.parse(json) 
     assert_equal 'Process', p.content_type
     assert_instance_of Ohana::Protocol::Process, p.content
   end
 
-  def test_content_type_process
-    json = ok([{:name => "echo"}, {:name => 'sleeper'}], '[Process]').to_json
-    p    = Ohana::Protocol::Response.parse(json) 
+  def test_content_type_processes
+    json =<<-JSON
+      {"status":"OK",
+        "content": [{"name":"echo"}, {"name":"sleeper"}],
+        "content_type":"[Process]" }
+    JSON
+    p = Ohana::Protocol::Response.parse(json) 
     assert_equal '[Process]', p.content_type
     assert_instance_of Array, p.content
     assert_equal 2, p.content.count

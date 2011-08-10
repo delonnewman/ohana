@@ -7,11 +7,11 @@ require 'protocol/response'
 # response statuses
 
 def response status, args={}
-  { :status => status }.merge(args)
+  Ohana::Protocol::Response.dispatch({ 'status' => status }.merge(args))
 end
 
 def await channel, from, to
-  response "AWAIT", { :channel => channel }.merge(from).merge(to)
+  response "AWAIT", { 'channel' => channel }.merge(from).merge(to)
 end
 
 def no_response from, to
@@ -19,7 +19,7 @@ def no_response from, to
 end
 
 def error type, msg, args={}
-  response "ERROR", { :type => type, :message => msg }.merge(args)
+  response "ERROR", { 'type' => type, 'message' => msg }.merge(args)
 end
 
 def process_error msg, from, to
@@ -31,13 +31,13 @@ def server_error msg
 end
 
 def ok content, content_type='String'
-  response "OK", :content => content, :content_type => content_type
+  response "OK", 'content' => content, 'content_type' => content_type
 end
 
 # requests, methods
 
 def request method, args={}
-  { :method => method }.merge(args)
+  Ohana::Protocol::Request.dispatch({ :method => method }.merge(args))
 end
 
 def send_msg message, from, to, reply_to={}

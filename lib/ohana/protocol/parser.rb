@@ -1,11 +1,13 @@
 require 'json'
+require File.join(File.dirname(__FILE__), '..', 'util')
 
 module Ohana
   module Protocol
     module Parser
       module ClassMethods
+        extend Ohana::Util
 	      def dispatch(hash)
-	        new(hash)
+	        new(hash_keys_to_sym(hash))
 	      end
 	
 	      def parse(json)

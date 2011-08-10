@@ -95,6 +95,7 @@ module Ohana
 
       class OK < Response
         attr_reader :content_type
+        include Ohana::Util
 
         def initialize(args)
           super(args)
@@ -108,7 +109,7 @@ module Ohana
 	          content_types = {
 	            'String'    => lambda { @content.to_json },
 	            'Process'   => lambda { Process.new(@content) },
-	            '[Process]' => lambda { @content.map { |c| Process.new(c) } }
+	            '[Process]' => lambda { @content.map { |p| Process.new(hash_keys_to_sym p) } }
 	          }
 	
 	          unless (types = content_types.keys).include?(@content_type)

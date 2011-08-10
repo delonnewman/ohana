@@ -71,7 +71,7 @@ class TestProcess < Test::Unit::TestCase
   end
 
   def test_no_spec_name_or_uri
-    json = '{"process": ""}'
+    json = '{"process": null}'
     assert_raise Ohana::Protocol::ProtocolError do
       Ohana::Protocol::Process.parse(p)
     end

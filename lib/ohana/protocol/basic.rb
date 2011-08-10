@@ -4,6 +4,7 @@ module Ohana
   module Protocol
     class Location
       include Parser
+      extend Ohana::Util
       attr_reader :process, :channel
       def initialize(args)
         @process = args[:process] || raise(ProtocolError, "process cannot be nil")

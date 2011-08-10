@@ -5,7 +5,6 @@ module Ohana
   module Protocol
     module Parser
       module ClassMethods
-        extend Ohana::Util
 	      def dispatch(hash)
 	        new(hash_keys_to_sym(hash))
 	      end
@@ -27,6 +26,7 @@ module Ohana
 
       def self.included(klass)
         klass.extend(ClassMethods)
+        klass.extend(Ohana::Util)
       end
     end
 

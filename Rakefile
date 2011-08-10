@@ -27,3 +27,10 @@ task :deploy do
 	sh "git push"
 	sh "sudo ggem #{pkg}"
 end
+
+desc "Run test suite"
+namespace :test do
+  task :units do
+    sh "ruby test/suite.rb"
+  end
+end

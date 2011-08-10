@@ -50,7 +50,7 @@ class TestNoResponseDSL < Test::Unit::TestCase
   end
 end
 
-class ErrorDSL < Test::Unit::TestCase
+class TestErrorDSL < Test::Unit::TestCase
   include ResponseTestHelpers
   include TestDSL
 
@@ -129,5 +129,33 @@ class TestAddDSL < Test::Unit::TestCase
 
   def setup
     @req = add('echo', 'RESTful', 'uri' => 'http://localhost:4567/process.json')
+  end
+end
+
+class TestGetDSL < Test::Unit::TestCase
+  include RequestTestHelpers
+  include TestDSL
+
+  type   Ohana::Protocol::Request::Get
+  method 'GET'
+
+  prop 'process', String, 'echo'
+
+  def setup
+    @req = get('echo')
+  end
+end
+
+class TestRemoveDSL < Test::Unit::TestCase
+  include RequestTestHelpers
+  include TestDSL
+
+  type   Ohana::Protocol::Request::Remove
+  method 'REMOVE'
+
+  prop 'process', String, 'echo'
+
+  def setup
+    @req = remove('echo')
   end
 end

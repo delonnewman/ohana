@@ -6,9 +6,13 @@ require 'json'
 
 module Ohana
   module Protocol
-    class ResponseError < RuntimeError; end
+    class ResponseError < RuntimeError
+      include Ohana::Serializable
+    end
+
     class Response
       include Parser
+      include Ohana::Serializable
       extend Ohana::Util
 
       attr_reader :status

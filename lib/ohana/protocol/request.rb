@@ -11,21 +11,24 @@ module Ohana
 
       attr_reader :method
 
+      METHODS = %w{ SEND LIST ADD GET REMOVE }.freeze
+      @@method_dispatch = {
+	      METHODS[0] => lambda { |h| Send.new(h) },
+	      METHODS[1] => lambda { |h| List.new(h) },
+	      METHODS[2] => lambda { |h| Add.new(h) },
+	      METHODS[3] => lambda { |h| Get.new(h) },
+	      METHODS[4] => lambda { |h| Remove.new(h) }
+	    }
+
       def self.dispatch(h)
         h = hash_keys_to_sym h
-	      methods = {
-	        'SEND'   => lambda { |h| Send.new(h) },
-	        'LIST'   => lambda { |h| List.new(h) },
-	        'ADD'    => lambda { |h| Add.new(h) },
-	        'GET'    => lambda { |h| Get.new(h) },
-	        'REMOVE' => lambda { |h| Remove.new(h) }
-	      }
+        method = h[:method]
 
-        if h[:method] && methods.keys.include?(h[:method])
-          methods[h[:method]].call(h)
+        if method && METHODS.include?(method)
+          @@method_dispatch[method].call(h)
         else
-          raise RequestError, "'#{h[:method]}' is invalid.  " +
-            "'#{methods.keys.join(', ')}' are valid." 
+          raise RequestError, "'#{method}' is invalid.  " +
+            "'#{METHODS.join(', ')}' are valid." 
         end
       end
 
@@ -84,6 +87,13 @@ module Ohana
 
         def spec
           ProcessSpec.new(@spec) if @spec
+        end
+
+        def to_hash
+          h = { :type => @type, :name => @name }
+          h.merge!(:spec => @spec) if @spec
+          h.merge!(:uri  => @uri)  if @uri
+          h
         end
       end
 

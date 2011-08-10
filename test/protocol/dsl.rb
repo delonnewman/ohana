@@ -42,8 +42,8 @@ class TestNoResponseDSL < Test::Unit::TestCase
   type   Ohana::Protocol::Response::NoResponse
   status 'NORESPONSE'
 
-  prop 'to',      Ohana::Protocol::Location
-  prop 'from',    Ohana::Protocol::Location
+  prop 'to',   Ohana::Protocol::Location
+  prop 'from', Ohana::Protocol::Location
 
   def setup
     @res = no_response(from('sleeper/sleep'), to('echo/say'))

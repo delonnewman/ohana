@@ -5,11 +5,13 @@ require 'dm-migrations'
 require 'uri'
 require 'net/http'
 
-$:.unshift('.') unless $:.include?('.')
-require '../protocol/basic'
+require File.join(File.dirname(__FILE__), '..', 'protocol', 'basic')
+require File.join(File.dirname(__FILE__), '..', 'util')
 
 DataMapper::Logger.new(File.open('/tmp/ohana.log', 'a'), :debug)
-DataMapper.setup(:default, :adapter => 'sqlite', :path => File.expand_path(File.join(File.dirname(__FILE__), 'process.db')))
+DataMapper.setup(:default, 
+                 :adapter => 'sqlite',
+                 :path => File.expand_path(File.join(File.dirname(__FILE__), 'process.db')))
 
 module Ohana
   module Process
@@ -52,12 +54,12 @@ module Ohana
       end
 	
 	    def spec
-	      @spec ||= if spec_cache then ::Ohana::Protocol::ProcessSpec.parse(spec_cache)
-	                else
-	                  # fetch from spec_uri
-	                  update(:spec_cache => JSON.parse(Net::HTTP.get(URI.parse(spec_uri))))
-	                  ::Ohana::Protocol::ProcessSpec.parse(spec_cache)
-	                end
+	      @scache ||= if @spec then ::Ohana::Protocol::ProcessSpec.parse(@spec)
+	                  else
+	                    # fetch from spec_uri
+	                    update(:spec => JSON.parse(Net::HTTP.get(URI.parse(uri))))
+	                    ::Ohana::Protocol::ProcessSpec.parse(@spec)
+	                  end
 	    end
 
       def channels; spec.channels end
@@ -84,7 +86,8 @@ module Ohana
 		  def send_msg(channel, message)
         super(channel, message)
         if spec.respond_to?(:root_uri)
-	        res = Net::HTTP.post_form URI.parse("#{spec.root_uri}/channel/#{channel}"), { :message => message }
+	        res = Net::HTTP.post_form URI.parse("#{spec.root_uri}/channel/#{channel}"), 
+                                    { :message => message }
           res.body
         else
           raise ProcessStoreError, "spec must contain root_uri"

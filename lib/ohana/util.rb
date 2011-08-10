@@ -12,4 +12,20 @@ module Ohana
       h
     end
   end
+
+  module Serializable
+    def to_json
+      h = {}
+      instance_variables.each do |var|
+        h[var.to_s.sub('@', '')] = instance_variable_get(var)
+      end
+      h.to_json
+    end
+  end
+end
+
+module Enumerable
+  def to_json
+    "[#{map { |x| x.to_json }.join(',')}]"
+  end
 end

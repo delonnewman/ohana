@@ -5,3 +5,5 @@
   - .NET
   - Python
   - Perl
+- add message queue and dispatcher process that feeds off it
+  - make queue in memory but abstract it so that other adapters can be made

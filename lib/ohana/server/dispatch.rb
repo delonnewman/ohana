@@ -39,7 +39,13 @@ module Ohana
         @request = req
       end
 
-      def dispatch; end
+      def dispatch(&block)
+        begin
+          block.call(@request)
+        rescue => e
+          server_error("#{e.class} - #{e.message}")
+        end
+      end
 
 	    class Send < Dispatch
 	      attr_reader :from, :to
@@ -73,42 +79,37 @@ module Ohana
 
       class List < Dispatch
         def dispatch
-          begin
-            ok(Process::Store.all.to_json, '[Process]')
-          rescue => e
-            server_error("#{e.class}: #{e.message}")
-          end
+          super { |req|
+            ok Process::Store.all.to_json, '[Process]'
+          }
         end
       end
 
       class Add < Dispatch
         def dispatch
-          begin
-            ok(Process::Store.create(@request.to_hash).to_json, 'Process')
-          rescue => e
-            server_error("#{e.class}: #{e.message}")
-          end
+          super { |req|
+            ok Process::Store.create(req.to_hash).to_json, 'Process'
+          }
         end
       end
 
       class Get < Dispatch
         def dispatch
-          begin
-            ok(Process::Store.first(:name => @request.process).to_json, 'Process')
-          rescue => e
-            server_error("#{e.class}: #{e.message}")
-          end
+          super { |req|
+            if p = Process::Store.first(:name => req.process)
+              ok p, 'Process'
+            else
+              raise DispatchError, "can't find process '#{req.process}'"
+            end
+          }
         end
       end
 
       class Remove < Dispatch
         def dispatch
-          begin
-            ok(Process::Store.first(:name => @request.process).destory.to_json,
-               'Process')
-          rescue => e
-            server_error("#{e.class}: #{e.message}")
-          end
+          super { |req|
+            ok Process::Store.first(:name => req.process).destory.to_json, 'Process'
+          }
         end
       end
 	  end # Dispatch

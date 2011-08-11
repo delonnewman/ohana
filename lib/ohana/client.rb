@@ -1,5 +1,4 @@
 require 'socket'
-require 'json'
 require File.join(File.dirname(__FILE__), 'protocol')
 
 module Ohana

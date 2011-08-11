@@ -33,7 +33,22 @@ module Ohana
       end
 
       def initialize(args)
-        @method = args[:method] || raise(RequestError, "method cannot be nil")
+        @method   = args[:method] || raise(RequestError, "method cannot be nil")
+        @to       = args[:to]        || raise(RequestError, "to cannot be nil")
+        @from     = args[:from]      || raise(RequestError, 'from cannot be nil')
+        @reply_to = args[:reply_to]
+      end
+
+      def to
+        ::Ohana::Protocol::Location.new(@to)
+      end
+
+      def from
+        ::Ohana::Protocol::Location.new(@from)
+      end
+
+      def reply_to
+        ::Ohana::Protocol::Location.new(@reply_to) if @reply_to
       end
 
       def to_json
@@ -44,28 +59,17 @@ module Ohana
         h.to_json
       end
 
+      def message?; false end
+
       class Send < Request
         attr_reader :message
 
         def initialize(args)
           super(args)
-          @to       = args[:to]        || raise(RequestError, "to cannot be nil")
-          @from     = args[:from]      || raise(RequestError, 'from cannot be nil')
-          @reply_to = args[:reply_to]
           @message  = args[:message]   || raise(RequestError, 'message cannot be nil')
         end
 
-        def to
-          ::Ohana::Protocol::Location.new(@to)
-        end
-
-        def from
-          ::Ohana::Protocol::Location.new(@from)
-        end
-
-        def reply_to
-          ::Ohana::Protocol::Location.new(@reply_to) if @reply_to
-        end
+        def message?; true end
       end
 
       class List < Request; end

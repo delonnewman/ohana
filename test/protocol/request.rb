@@ -88,8 +88,17 @@ class TestList < Test::Unit::TestCase
   type Ohana::Protocol::Request::List
   method 'LIST'
 
+  prop 'to',       Ohana::Protocol::Location
+  prop 'from',     Ohana::Protocol::Location
+  prop 'reply_to', Ohana::Protocol::Location
+
   def setup
-    @json = '{"method":"LIST"}'
+    @json =<<-JSON
+      {"method":"LIST",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"} }
+    JSON
     self.request = Ohana::Protocol::Request.parse(@json)
   end
 end
@@ -100,13 +109,19 @@ class TestAdd < Test::Unit::TestCase
   type Ohana::Protocol::Request::Add
   method 'ADD'
 
-  prop 'type', String, 'RESTful'
-  prop 'name', String, 'echo'
-  prop 'uri', String, 'http://localhost:4567/process.json'
+  prop 'to',       Ohana::Protocol::Location
+  prop 'from',     Ohana::Protocol::Location
+  prop 'reply_to', Ohana::Protocol::Location
+  prop 'type',     String, 'RESTful'
+  prop 'name',     String, 'echo'
+  prop 'uri',      String, 'http://localhost:4567/process.json'
 
   def setup
     @json =<<-JSON
       {"method":"ADD",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"},
         "name":"echo",
         "type":"RESTful",
         "uri": "http://localhost:4567/process.json" }
@@ -117,6 +132,9 @@ class TestAdd < Test::Unit::TestCase
   def test_with_spec
     json =<<-JSON
       {"method":"ADD",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"},
         "name":"echo",
         "type":"RESTful",
         "spec": {"name":"echo","type":"RESTful", "root_uri":"http://localhost:4567","channels":["say"]} }
@@ -137,6 +155,9 @@ class TestAdd < Test::Unit::TestCase
   def test_with_no_spec_and_no_uri
     json =<<-JSON
       {"method":"ADD",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"},
         "name":"echo",
         "type":"RESTful" }
     JSON
@@ -153,11 +174,17 @@ class TestGet < Test::Unit::TestCase
   type Ohana::Protocol::Request::Get
   method 'GET'
 
-  prop 'process', String, 'echo'
+  prop 'to',       Ohana::Protocol::Location
+  prop 'from',     Ohana::Protocol::Location
+  prop 'reply_to', Ohana::Protocol::Location
+  prop 'process',  String, 'echo'
 
   def setup
     @json =<<-JSON
       {"method":"GET",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"},
         "process":"echo" }
     JSON
     self.request = Ohana::Protocol::Request.parse(@json)
@@ -165,7 +192,10 @@ class TestGet < Test::Unit::TestCase
 
   def test_without_process
     json =<<-JSON
-      {"method":"GET"}
+      {"method":"GET",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"} }
     JSON
 
     assert_raise Ohana::Protocol::RequestError do
@@ -180,11 +210,17 @@ class TestRemove < Test::Unit::TestCase
   type Ohana::Protocol::Request::Remove
   method 'REMOVE'
 
-  prop 'process', String, 'echo'
+  prop 'to',       Ohana::Protocol::Location
+  prop 'from',     Ohana::Protocol::Location
+  prop 'reply_to', Ohana::Protocol::Location
+  prop 'process',  String, 'echo'
 
   def setup
     @json =<<-JSON
       {"method":"REMOVE",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"},
         "process":"echo" }
     JSON
     self.request = Ohana::Protocol::Request.parse(@json)
@@ -192,7 +228,10 @@ class TestRemove < Test::Unit::TestCase
 
   def test_without_process
     json =<<-JSON
-      {"method":"REMOVE"}
+      {"method":"REMOVE",
+        "to": {"process":"echo", "channel":"say"},
+        "from": {"process":"sleeper", "channel":"sleep" },
+        "reply_to": {"process":"sleeper", "channel":"say"} }
     JSON
 
     assert_raise Ohana::Protocol::RequestError do

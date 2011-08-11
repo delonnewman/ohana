@@ -4,6 +4,7 @@ $:.unshift('.') unless $:.include?('.')
 require File.join(File.dirname(__FILE__), 'protocol')
 require 'server/log'
 require 'server/dispatch'
+require 'server/message_queue'
 
 module Ohana
   HOST     = '127.0.0.1'.freeze
@@ -65,7 +66,8 @@ module Ohana
 	            begin
 			          req = Protocol::Request.parse(sock.gets)
 			          log.info("REQUEST: #{req.inspect}")
-	              sock.write Dispatch.request(req).to_json
+                MessageQueue.push(req)
+	              sock.write ok("message queued").to_json
 	            rescue => e
 	              exception sock, e
 	            end

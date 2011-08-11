@@ -1,0 +1,7 @@
+- clients:
+  - Sinatra (admin interface)
+  - JavaScript (WebSockets)
+        - will need to write websockets server as proxy
+  - .NET
+  - Python
+  - Perl

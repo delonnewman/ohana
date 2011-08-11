@@ -1,29 +1,62 @@
 require 'test/unit'
 
-$lib = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib'))
-require "#{$lib}/ohana"
-require "#{$lib}/client"
-require 'json'
-
+Ohana::Client.run('localhost', 3141, '{"method":"ADD", "content":{"type":"RESTful", "name":"echo", "spec_uri":"http://localhost:4567/process.json"}}')
 class TestClient < Test::Unit::TestCase
   def setup
-    Ohana.connect('localhost', 3141)
+    @type = 'Ohana::Process::RESTful'
+    @name = 'echo'
+    @uri  = 'http://localhost:4567/process.json'
   end
 
-  def teardown
+  def test_raw_list
+    res = Ohana::Client.run('localhost', 3141, '{"method":"LIST"}')
+    assert_instance_of Array, res
+    assert_equal 1, res.size
+    assert_instance_of Hash, res.first
+    assert_equal @type, res.first['type']
+    assert_equal @name, res.first['name']
+    assert_equal @uri,  res.first['spec_uri']
   end
 
-  def test_connection
-    assert Ohana.connect('localhost', 3141), "should connect to localhost:3141"
+  def test_raw_add
+    res = Ohana::Client.run('localhost', 3141, '{"method":"ADD", "content":{"type":"RESTful", "name":"echo", "spec_uri":"http://localhost:4567/process.json"}}')
+    assert_instance_of Hash, res
+    assert_equal @type, res['type']
+    assert_equal @name, res['name']
+    assert_equal @uri,  res['spec_uri']
   end
 
-  def test_send
-    assert Ohana.send(:echo, :say, "hello it's #{Time.now} from TestClient"), "send should return true"
+  def test_raw_send
+    res = Ohana::Client.run 'localhost', 3141, '{"method":"SEND", "content":{"process":"echo", "channel":"say", "content":"hola"}}'
+    assert_instance_of Hash, res
+    assert_equal 'echo', res['process']
+    assert_equal 'say',  res['channel']
+    assert_equal 'Do you speak Spanish?', res['content']
+  end
+
+  def test_list
+    res = Ohana.list
+    assert_instance_of Array, res
+    assert_equal 1, res.size
+    assert_instance_of Hash, res.first
+    assert_equal @type, res.first['type']
+    assert_equal @name, res.first['name']
+    assert_equal @uri,  res.first['spec_uri']
   end
 
   def test_add
-    assert Ohana.add('RESTful', :echo, 'http://locahost:4567/process.json')
+    res = Ohana.add :type => "RESTful", :name => "echo", :spec_uri => "http://localhost:4567/process.json"
+    assert_instance_of Hash, res
+    assert_equal @type, res['type']
+    assert_equal @name, res['name']
+    assert_equal @uri,  res['spec_uri']
+  end
+
+  def test_send
+    res = Ohana.send :process => "echo", :channel => "say", :content => "hola"
+    assert_instance_of Hash, res
+    assert_equal 'echo', res['process']
+    assert_equal 'say',  res['channel']
+    assert_equal 'Do you speak Spanish?', res['content']
   end
 end
-
-

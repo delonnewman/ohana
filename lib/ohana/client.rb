@@ -1,5 +1,6 @@
 require 'socket'
 require 'json'
+require File.join(File.dirname(__FILE__), 'protocol')
 
 module Ohana
   module Client
@@ -21,13 +22,9 @@ module Ohana
         out = sock.gets.chomp
         Process.kill 'TERM', kidpid
         begin
-          if (json = JSON.parse(out)).is_a?(Array)
-            json.map { |j| JSON.parse(j) }
-          else
-            json
-          end
+          Ohana::Protocol::Response.parse(out)
         rescue => e
-          puts "#{e.class}: #{e.message}"
+          client_error("#{e.class}: #{e.message}")
         end
       else
 	      # child copies standard input to the socket
@@ -40,8 +37,6 @@ module Ohana
   @@host = 'localhost'
   @@port = 3141
 
-  @@methods = %w{ SEND ADD LIST }
-
   def host=(val)
     @@host = val
   end
@@ -52,32 +47,27 @@ module Ohana
   end
   def port; @@port end
 
-  def self.request(method, content={})
-    if (method == 'SEND' || method == 'ADD') && content == {}
-      raise ArgumentError, "SEND and ADD must have content"
-    end
-
-    unless @@methods.include?(method)
-      raise ArgumentError, "'#{method}' is not valid. Valid methods include '#{@@methods.join(', ')}'."
-    end
-
-    if content.is_a?(String)
-      # let parsing errors fly!
-      content = JSON.parse(content)
-    end
-
-    Ohana::Client.run @@host, @@port, { :method => method, :content => content }.to_json
+  def self.request(req)
+    Ohana::Client.run @@host, @@port, req
   end
 
-  def self.send(content)
-    request 'SEND', content
+  def self.send_msg(*args)
+    request Kernel.send_msg(*args).to_json
   end
 
-  def self.add(content)
-    request 'ADD', content
+  def self.add(*args)
+    request Kernel.add(*args).to_json
   end
 
   def self.list
-    request 'LIST'
+    request Kernel.list.to_json
+  end
+
+  def self.get(*args)
+    request Kernel.get(*args).to_json
+  end
+
+  def self.remove(*args)
+    request Kernel.remove(*args).to_json
   end
 end

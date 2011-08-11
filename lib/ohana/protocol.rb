@@ -30,6 +30,10 @@ def server_error msg
   error "SERVER_ERROR", msg
 end
 
+def client_error msg
+  error "CLIENT_ERROR", msg
+end
+
 def ok content, content_type='String'
   response "OK", 'content' => content, 'content_type' => content_type
 end

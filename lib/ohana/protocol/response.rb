@@ -78,7 +78,7 @@ module Ohana
       class Error < Response
         attr_reader :message, :type
 
-        @@errors = %w{ PROCESS_ERROR SERVER_ERROR }
+        @@errors = %w{ PROCESS_ERROR SERVER_ERROR CLIENT_ERROR }
 
         def initialize(args)
           super(args)

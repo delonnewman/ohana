@@ -69,13 +69,11 @@ module Ohana
           puts "dispatcher #$$ up."
           loop {
             puts "looping..."
-#            if req = MessageQueue.pop
-#              puts "QUEUED MESSAGE: #{req.inspect}"
-#              Dispatch.request(req)
-#            else
-#              puts "Queue empty, nothing to dispatch."
-#            end
-            Dispatch.request(MessageQueue.pop)
+            if MessageQueue.size > 0
+              Dispatch.request(MessageQueue.pop)
+            else
+              sleep 1
+            end
           }
           exit
         end

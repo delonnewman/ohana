@@ -88,9 +88,12 @@ module Ohana
       class List < Dispatch
         def dispatch
           super { |req|
+            puts "Queued reply message"
+            puts "NUM_MESSAGES: #{MessageQueue.size}"
             MessageQueue.push(
-              send_msg(Process.list, from(req.to.to_s), to(req.from.to_s))
+              send_msg Process.list, from(req.to.to_s), to(req.from.to_s)
             )
+            puts "NUM_MESSAGES: #{MessageQueue.size}"
           }
         end
       end

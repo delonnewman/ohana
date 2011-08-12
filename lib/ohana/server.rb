@@ -49,6 +49,9 @@ module Ohana
 	        acceptor = Socket.new(:INET, :STREAM, 0)
 	        address  = Socket.pack_sockaddr_in(PORT, HOST)
 	        acceptor.bind(address)
+          puts "= Running Ohana on #{HOST}:#{PORT} PID: #$$ ="
+          puts "= Forking #{MAX_KIDS} children +1 Dispatcher ="
+          puts "Press Ctrl-C to shutdown."
 	        acceptor.listen(10)
 	      rescue Errno::EADDRINUSE => e
 	        puts "'#{HOST}:#{PORT}' is already in use"
@@ -61,22 +64,25 @@ module Ohana
 	
         # Dispatcher
         disp_pid = fork do
-	        trap('INT') { exit }
+	        trap('INT') { puts "dispatcher going down..."; exit }
 	        
           puts "dispatcher #$$ up."
           loop {
-            if req = MessageQueue.pop
-              Dispatch.request(req)
-            else
-              puts "Queue empty, nothing to dispatch."
-            end
+            puts "looping..."
+#            if req = MessageQueue.pop
+#              puts "QUEUED MESSAGE: #{req.inspect}"
+#              Dispatch.request(req)
+#            else
+#              puts "Queue empty, nothing to dispatch."
+#            end
+            Dispatch.request(MessageQueue.pop)
           }
           exit
         end
 
 	      MAX_KIDS.times do
 	        fork do
-	          trap('INT') { exit }
+	          trap('INT') { puts "\nchild #$$ going down..."; exit }
 	
 	          puts "child #$$ accepting on shared socket (#{HOST}:#{PORT})"
 			      loop {
@@ -99,9 +105,6 @@ module Ohana
 
 	      trap('INT') { 
           puts "\ngoing down...";
-          puts "dispatcher going down..."
-          ::Process.kill "TERM", disp_pid
-          puts "OK."
           exit
         }
 	

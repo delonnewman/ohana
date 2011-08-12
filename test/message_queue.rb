@@ -4,7 +4,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'ohana',
 
 class TestMessageQueue < Test::Unit::TestCase
   def setup
-    Ohana::Server::MessageQueue.instance.adapter = Ohana::Server::StarlingAdapter.new
+    Ohana::Server::MessageQueue.instance.adapter = Ohana::Server::POSIXAdapter.new
     Ohana::Server::MessageQueue.clear
   end
 

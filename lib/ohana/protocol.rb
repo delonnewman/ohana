@@ -47,7 +47,7 @@ module Ohana::Protocol::DSL
 	end
 	
 	def send_msg message, from, to, reply_to={}
-	  request "SEND", { :message => message }.merge(from).merge(to).merge(reply_to)
+	  #request "SEND", { :message => message }.merge(from).merge(to).merge(reply_to)
 	end
 	
 	def list from, to

@@ -1,5 +1,8 @@
 require 'singleton'
 require 'starling'
+require 'posix_mq'
+
+require File.join(File.dirname(__FILE__), '..', 'protocol')
 
 module Ohana
   module Server
@@ -45,9 +48,23 @@ module Ohana
       end
     end
 
-    class Default
+    class POSIXAdapter
       def initialize
-        
+        @queue = POSIX_MQ.open('/ohana', :rw)
+      end
+
+      def push(x)
+        @queue << x.to_json
+      end
+
+      def pop
+        Ohana::Protocol::Request.parse(@queue.shift)
+      end
+
+      def clear
+        @queue.nonblock = true
+        @queue.shift while @queue.shift
+        @queue.nonblock = false
       end
     end
 

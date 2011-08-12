@@ -2,3 +2,5 @@
 pkg/
 lib/ohana/server/process.db
 Gemfile.lock
+tmp/starling.pid
+tmp/starling.spool/

@@ -40,6 +40,7 @@ module Ohana
       include Parser
       attr_reader :name, :version, :type, :channels
       def initialize(args)
+        p args
         @name     = args[:name]     || raise(ProtocolError, "name cannot be nil")
         @version  = args[:version]
         @type     = args[:type]     || raise(ProtocolError, "type cannot be nil")

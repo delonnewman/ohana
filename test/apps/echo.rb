@@ -25,5 +25,6 @@ get '/process.json' do
   { :name => 'echo',
     :version => 1,
     :channels => %w{ say },
+    :type     => 'RESTful',
     :root_uri => 'http://localhost:4567' }.to_json
 end

@@ -3,6 +3,8 @@ require File.join(File.dirname(__FILE__), 'protocol')
 
 module Ohana
   module Client
+    extend Ohana::Protocol::DSL
+
     def self.run(host, port, req)
       # create a tcp connection to the specified host and port
       sock = begin
@@ -18,7 +20,7 @@ module Ohana
 
       if kidpid
 	      # parent copies the socket to standard output
-        out = sock.gets.chomp
+        out = sock.gets.to_s.chomp
         Process.kill 'TERM', kidpid
         begin
           Ohana::Protocol::Response.parse(out)

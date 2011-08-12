@@ -1,12 +1,15 @@
 require File.join(File.dirname(__FILE__), 'process')
 require File.join(File.dirname(__FILE__), '..', 'protocol')
 require File.join(File.dirname(__FILE__), '..', 'util')
+require File.join(File.dirname(__FILE__), 'message_queue')
 
 module Ohana
   module Server
 	  class DispatchError < RuntimeError; end
 	  class Dispatch
       include Ohana::Serializable
+      include Ohana::Protocol::DSL
+      include Log
 
       METHODS = Ohana::Protocol::Request::METHODS
 	    @@method_dispatch = {
@@ -42,8 +45,14 @@ module Ohana
       def dispatch(&block)
         begin
           block.call(@request)
+          log.info("DISPATCHED: #{@request.inspect}")
+          puts "DISPATCHED: #{@request.inspect}"
         rescue => e
           server_error("#{e.class} - #{e.message}")
+          log.error("ERROR: #{e.class}: #{e.message}\n #{e.backtrace.join("\n")}")
+          if p = Process.fetch(@request.from.process)
+            p.send_msg(process_error(e))
+          end
         end
       end
 
@@ -60,7 +69,6 @@ module Ohana
 	        if p = Process.fetch(@to.process)
 	          begin
 	            p.send_msg(@request.message)
-              await(@to.channel, from(@to.to_s), to(@from.to_s))
 	          rescue => e
 	            begin
 	              p = Process.fetch(@from.process)
@@ -80,7 +88,9 @@ module Ohana
       class List < Dispatch
         def dispatch
           super { |req|
-            ok Process::Store.all.to_json, '[Process]'
+            MessageQueue.push(
+              send_msg(Process.list, from(req.to.to_s), to(req.from.to_s))
+            )
           }
         end
       end
@@ -88,7 +98,9 @@ module Ohana
       class Add < Dispatch
         def dispatch
           super { |req|
-            ok Process::Store.create(req.to_hash).to_json, 'Process'
+            MessageQueue.push(
+              send_msg Process.add(req.to_hash), from(req.to.to_s), to(req.from.to_s)
+            )
           }
         end
       end
@@ -96,8 +108,10 @@ module Ohana
       class Get < Dispatch
         def dispatch
           super { |req|
-            if p = Process::Store.first(:name => req.process)
-              ok p, 'Process'
+            if p = Process.fetch(req.process)
+	            MessageQueue.push(
+	              send_msg p, from(req.to.to_s), to(req.from.to_s)
+	            )
             else
               raise DispatchError, "can't find process '#{req.process}'"
             end
@@ -108,7 +122,13 @@ module Ohana
       class Remove < Dispatch
         def dispatch
           super { |req|
-            ok Process::Store.first(:name => req.process).destory.to_json, 'Process'
+            if p = Process.fetch(req.process)
+	            MessageQueue.push(
+	              send_msg p.destroy, from(req.to.to_s), to(req.from.to_s)
+	            )
+            else
+              raise DispatchError, "can't find process '#{req.process}'"
+            end
           }
         end
       end

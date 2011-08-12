@@ -1,3 +1,5 @@
+require 'dm-core'
+
 module Ohana
   module Util
     def hash_keys_to_sym(hash)
@@ -24,7 +26,7 @@ module Ohana
   end
 end
 
-module Enumerable
+class DataMapper::Collection
   def to_json
     "[#{map { |x| x.to_json }.join(',')}]"
   end

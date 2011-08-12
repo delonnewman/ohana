@@ -9,7 +9,7 @@ require 'server/message_queue'
 module Ohana
   HOST     = '127.0.0.1'.freeze
   PORT     = 3141
-  MAX_KIDS = 3
+  MAX_KIDS = 5
 
   module Server
     def self.run(args=[])
@@ -18,6 +18,7 @@ module Ohana
 
 	  class Daemon
 	    extend Log
+      extend Ohana::Protocol::DSL
 	
 	    def self.exception(io, e)
 	      msg = "#{e.class}: #{e.message}" #{e.backtrace.join("\n")}"
@@ -33,7 +34,7 @@ module Ohana
 				options = { :daemonize => false }
 	      args.each do |arg|
 	        case arg
-	        when /-(d|daemonize)/ then options[:daemonize] = true
+	        when /(-d|--daemonize)/ then options[:daemonize] = true
 	        end
 	      end
 	      options
@@ -41,6 +42,8 @@ module Ohana
 	
 	    def self.run(args=[])
 	      ::Process.daemon if options(args)[:daemonize]
+
+        MessageQueue.instance.adapter = StarlingAdapter.new
 	
 	      begin
 	        acceptor = Socket.new(:INET, :STREAM, 0)
@@ -56,6 +59,21 @@ module Ohana
 	
 	      trap('EXIT') { acceptor.close }
 	
+        # Dispatcher
+        disp_pid = fork do
+	        trap('INT') { exit }
+	        
+          puts "dispatcher #$$ up."
+          loop {
+            if req = MessageQueue.pop
+              Dispatch.request(req)
+            else
+              puts "Queue empty, nothing to dispatch."
+            end
+          }
+          exit
+        end
+
 	      MAX_KIDS.times do
 	        fork do
 	          trap('INT') { exit }
@@ -65,9 +83,10 @@ module Ohana
 			        sock, addr = acceptor.accept
 	            begin
 			          req = Protocol::Request.parse(sock.gets)
+	              sock.write await(req.from.channel, from(req.to.to_s), to(req.from.to_s)).to_json
 			          log.info("REQUEST: #{req.inspect}")
                 MessageQueue.push(req)
-	              sock.write ok("message queued").to_json
+                puts "Q: #{MessageQueue.size}"
 	            rescue => e
 	              exception sock, e
 	            end
@@ -77,8 +96,14 @@ module Ohana
 	          exit
 	        end
 	      end
-	
-	      trap('INT') { puts "\ngoing down..."; exit }
+
+	      trap('INT') { 
+          puts "\ngoing down...";
+          puts "dispatcher going down..."
+          ::Process.kill "TERM", disp_pid
+          puts "OK."
+          exit
+        }
 	
 	      ::Process.waitall
 	    end

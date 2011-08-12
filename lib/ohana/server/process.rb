@@ -22,14 +22,14 @@ module Ohana
     end
 
     def self.list
-      Store.all.map { |x| x.to_json }.to_json
+      Store.all #.map { |x| x.to_json }.to_json
     end
 
     def self.add(process)
       begin
-        Store.create(process).to_json
+        Store.create(process) #.to_json
       rescue DataObjects::IntegrityError
-        Store.first(:name => process['name']).to_json
+        Store.first(:name => process['name']) #.to_json
       end
     end
 
@@ -58,13 +58,14 @@ module Ohana
 	                  else
 	                    # fetch from spec_uri
 	                    update(:spec => JSON.parse(Net::HTTP.get(URI.parse(uri))))
-	                    ::Ohana::Protocol::ProcessSpec.parse(@spec)
+	                    ::Ohana::Protocol::ProcessSpec.dispatch(@spec)
 	                  end
 	    end
 
       def channels; spec.channels end
 	
 	    def send_msg(channel, message)
+        # TODO: needs authentication key to receive messages
 	      if not channels.include?(channel)
 	        raise ProcessStoreError, "Invalid channel: #{name} process does not have channel " + 
 	          "#{channel}: #{channels.join(', ')} are valid."
@@ -90,10 +91,21 @@ module Ohana
                                     { :message => message }
           res.body
         else
-          raise ProcessStoreError, "spec must contain root_uri"
+          raise ProcessStoreError, "spec must contain 'root_uri'"
         end
 	    end
 	  end
+
+    class Script < Store
+      def send_msg(channel, message)
+        super(channel, message)
+        if spec.respond_to?(:script)
+          IO.popen("#{spec.script} --#{channel}=\"#{message}\"", 'r').read
+        else
+          raise ProcessStoreError, "spec must contain 'script'"
+        end
+      end
+    end
   end
 end
 

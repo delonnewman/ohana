@@ -2,6 +2,9 @@ require File.expand_path(File.join(File.dirname(__FILE__), '../../test/protocol/
 require 'json'
 
 module TestDSL
+  def self.included(klass)
+    klass.send(:include, Ohana::Protocol::DSL)
+  end
   def test_response_parse
     if @res
 	    assert_nothing_raised do
@@ -112,7 +115,7 @@ class TestListDSL < Test::Unit::TestCase
   method 'LIST'
 
   def setup
-    @req = list
+    @req = list from('echo/say'), to('sleeper/sleep')
   end
 end
 
@@ -128,7 +131,10 @@ class TestAddDSL < Test::Unit::TestCase
   prop 'uri',  String, 'http://localhost:4567/process.json'
 
   def setup
-    @req = add('echo', 'RESTful', 'uri' => 'http://localhost:4567/process.json')
+    @req = add('echo', 'RESTful',
+               from('echo/say'),
+               to('sleeper/sleep'),
+               'uri' => 'http://localhost:4567/process.json')
   end
 end
 
@@ -142,7 +148,7 @@ class TestGetDSL < Test::Unit::TestCase
   prop 'process', String, 'echo'
 
   def setup
-    @req = get('echo')
+    @req = get('echo', from('echo/say'), to('sleeper/sleep'))
   end
 end
 
@@ -156,6 +162,6 @@ class TestRemoveDSL < Test::Unit::TestCase
   prop 'process', String, 'echo'
 
   def setup
-    @req = remove('echo')
+    @req = remove('echo', from('echo/say'), to('sleeper/sleep'))
   end
 end

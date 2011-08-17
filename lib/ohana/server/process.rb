@@ -54,7 +54,7 @@ module Ohana
       end
 	
 	    def spec
-	      @scache ||= if @spec then ::Ohana::Protocol::ProcessSpec.parse(@spec)
+	      @scache ||= if @spec then @spec
 	                  else
 	                    # fetch from spec_uri
 	                    update(:spec => JSON.parse(Net::HTTP.get(URI.parse(uri))))

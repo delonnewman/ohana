@@ -68,7 +68,7 @@ module Ohana
 	        
           puts "dispatcher #$$ up."
           loop {
-            puts "looping..."
+            #puts "looping..."
             if MessageQueue.size > 0
               Dispatch.request(MessageQueue.pop)
             else

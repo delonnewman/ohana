@@ -1,17 +1,35 @@
+$:.unshift File.dirname(__FILE__)
 require 'receiver'
+require 'json'
 
 module Ohana
-  Message = Struct.new(:to, :from, :channel, :content)
+  Message = Struct.new(:to, :channel, :content)
+
+  class MalformedMessage < RuntimeError; end
+
+  def Message.parse(json)
+    h = JSON.parse(json)
+    raise MalformedMessage, json unless h.is_a?(Hash)
+
+    to, channel, content = h['to'], h['channel'], h['content']
+
+    if to && channel && content
+      new(to, channel, content)
+    else
+      raise MalformedMessage, "to, channel, and content are required"
+    end
+  end
 
   class ProcessError < RuntimeError; end
   class Process
+    include Receiver
+
     attr_accessor :name, :version
-    @@callbacks  = {}
-    @@properties = {}
-    @@receiver   = :socket
+    @@adapter      = :socket
 
     def initialize
       @version = 1
+      @name    = self.class.to_s
     end
 
     #
@@ -19,19 +37,26 @@ module Ohana
     #
 
     # set receive channel
-    def self.receive(channel, %callback)
-      @@callbacks[channel] = callback
+    def self.receive(channel, &callback)
+      @@channels[channel] = callback
     end
 
     # get list of channels
     def self.channels
-      @@callback.keys
+      @@channels.keys
+    end
+
+    def self.channels?
+      not channels.empty?
     end
 
     # specify receiver adapter to be used, default is :socket
-    def self.receiver(adapter)
-      @@receiver = adapter
+    def self.adapter(adapter, args={})
+      @@adapter      = adapter
+      @@adapter_args = args
     end
+
+    def adapter; @@adapter end
 
     # returns the process spec as a hash
     def spec
@@ -45,14 +70,15 @@ module Ohana
     # Instance Methods
     #
     
-    # send message, on channel to process
-    def receive(channel, message)
-      if channel = @@callbacks[channel]
-        channel.call(message)
+    # deliver message, on channel to process
+    def deliver(msg)
+      if callback = @@channels[msg.channel.to_sym]
+        callback.call(msg.content)
       else
-        raise ProcessError, "channel '#{channel}', not found"
+        raise ProcessError, "channel '#{msg.channel}', not found"
       end
     end
+    alias << deliver
 
   end
 end

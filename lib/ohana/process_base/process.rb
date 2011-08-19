@@ -67,6 +67,11 @@ module Ohana
       end
     end
 
+    class Message
+      include DataMapper::Resource
+
+    end
+
     DataMapper.auto_migrate!
   end
 end

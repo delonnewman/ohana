@@ -1,12 +1,17 @@
-require 'preforker'
+require 'socket'
+require File.join(File.dirname(__FILE__), '..', 'server', 'log')
 
 module Ohana
   module Receiver
     class Preforker
-	    #extend Log
+	    include ::Ohana::Server::Log
+
+      def self.await(process, args)
+        new(process, args).run
+      end
 
 	    def exception(io, e)
-	      msg = "#{e.class}: #{e.message}" #{e.backtrace.join("\n")}"
+	      msg = "#{e.class}: #{e.message} #{e.backtrace.join("\n")}"
 	      log.error msg
 		    begin
 	        io.puts server_error(msg).to_json
@@ -17,23 +22,26 @@ module Ohana
 	
       attr_reader :daemon, :host, :port, :workers
 
-	    def initialize(args={}, &block)
-        @daemon  = args[:daemonize] || args[:daemon] || false
-        @host    = args[:host]    || 'localhost'
-        @port    = args[:port]    || 3141
-        @workers = args[:workers] || 5
-        @block   = block
+	    def initialize(process, args={})
+        @daemon  = args[:daemon]  || false
+        @host    = args[:host]    || 'localhost'.freeze
+        @port    = args[:port]    || 3141 # make a random port?
+        @workers = args[:workers] || 5    # number of workers to maintain
+        @process = process
       end
 
       alias daemon? daemon
 
+      # run server, fork workers
       def run
+        ::Process.daemon if daemon?
+
 	      begin
 	        acceptor = Socket.new(:INET, :STREAM, 0)
 	        address  = Socket.pack_sockaddr_in(@port, @host)
 	        acceptor.bind(address)
           unless daemon?
-	          puts "-= Running Ohana::Receiver::Preforker on #@host:#@port PID: #$$ =-"
+	          puts "-= Running #{@process.name} on #@host:#@port PID: #$$ =-"
 	          puts "-= Forking #@workers children =-"
 	          puts "Press Ctrl-C to shutdown."
           end
@@ -49,13 +57,13 @@ module Ohana
 	
 	      workers.times do
 	        fork do
-	          trap('INT') { puts "\nchild #$$ going down..."; exit }
+	          trap('INT') { exit }
 	
 	          puts "child #$$ accepting on shared socket (#@host:#@port)"
 			      loop {
 			        sock, addr = acceptor.accept
 	            begin
-                sock.puts @block.call(self, sock.gets)
+                sock.puts @process.deliver(Ohana::Message.parse(sock.gets))
 	            rescue => e
 	              exception sock, e
 	            end
@@ -67,10 +75,10 @@ module Ohana
 	      end
 
 	      trap('INT') { 
-          puts "\ngoing down...";
+          puts "\ngoing down..."
           exit
         }
-	
+
 	      ::Process.waitall
 	    end
     end

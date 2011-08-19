@@ -1,5 +1,14 @@
 #!/usr/bin/env ruby
 $:.unshift File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'ohana/server'
+require 'ohana'
+require 'choice'
 
-Ohana::Server.run(ARGV)
+Choice.options do
+  header "Usage: $0 [OPTIONS]"
+  header ""
+  options :debug => { :long => '--debug', :desc => 'debug mode' }
+  footer ""
+  footer "--help this message"
+end
+
+Ohana.run(Choice.choices)

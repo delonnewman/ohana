@@ -15,8 +15,10 @@ begin
     spec.add_development_dependency('jeweler')
 
 		spec.add_dependency('json')
-		spec.add_dependency('datamapper')
-		spec.add_dependency('dm-sqlite-adapter')
+		spec.add_dependency('couchobject')
+		spec.add_dependency('choice')
+#		spec.add_dependency('datamapper')
+#		spec.add_dependency('dm-sqlite-adapter')
   end
 rescue LoadError
   puts "Jeweler not available.  Install it with: gem install jeweler"

@@ -6,8 +6,10 @@ require 'uri'
 require 'net/http'
 require 'json'
 
+require File.join(File.dirname(__FILE__), 'process')
+
 module Ohana
-  class ProcessBase
+  class ProcessBase < ::Ohana::Process
     DataMapper::Logger.new(File.open('/tmp/ohana-process-base.log', 'a'), :debug)
     DataMapper.setup(:default, :adapter => 'sqlite',
                      :path => File.expand_path(File.join(File.dirname(__FILE__), 'process.db')))
@@ -67,10 +69,9 @@ module Ohana
       end
     end
 
-    class Message
-      include DataMapper::Resource
-
-    end
+#    class Message
+#      include DataMapper::Resource
+#    end
 
     DataMapper.auto_migrate!
   end

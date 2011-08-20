@@ -1,21 +1,21 @@
-# TODO: autoload adapters
-$:.unshift File.join(File.dirname(__FILE__), 'receiver')
-require 'preforker'
 
 module Ohana
   module Receiver
-    # a mixin for Ohana::Process
-    @@adapter      = nil
-    @@adapter_args = {}
-    @@channels     = {}
-    @@properties   = {}
+    class Adapter
+      def initialize(adapter, args={})
+        klass_name = adapter.to_s.capitalize.gsub(/_(\w)/) { $1.upcase }.to_sym
+        load File.join(File.dirname(__FILE__), 'receiver', "#{adapter.to_s}.rb")
 
-    def receive(msg)
-      
-    end
+        if Ohana::Receiver.constants.include?(klass_name)
+          @klass = Ohana::Receiver.const_get(klass_name)
+        else
+          raise RuntimeError, "Adapter #{adapter.inspect}, is not valid"
+        end
+      end
 
-    def await
-      Preforker.await(self, @@adapter_args)
+      def spawn(process, args)
+        @klass.new(process, args).spawn
+      end
     end
   end
 end

@@ -6,10 +6,6 @@ module Ohana
     class Preforker
 	    include ::Ohana::Server::Log
 
-      def self.await(process, args)
-        new(process, args).run
-      end
-
 	    def exception(io, e)
 	      msg = "#{e.class}: #{e.message} #{e.backtrace.join("\n")}"
 	      log.error msg
@@ -23,17 +19,18 @@ module Ohana
       attr_reader :daemon, :host, :port, :workers
 
 	    def initialize(process, args={})
-        @daemon  = args[:daemon]  || false
-        @host    = args[:host]    || 'localhost'.freeze
-        @port    = args[:port]    || 3141 # make a random port?
-        @workers = args[:workers] || 5    # number of workers to maintain
-        @process = process
+        @daemon      = args[:daemon]      || false
+        @host        = args[:host]        || 'localhost'.freeze
+        @port        = args[:port]        || 3141 # make a random port?
+        @workers     = args[:workers]     || 5    # number of workers to maintain
+        @max_clients = args[:max_clients] || 5
+        @process     = process
       end
 
       alias daemon? daemon
 
       # run server, fork workers
-      def run
+      def spawn
         ::Process.daemon if daemon?
 
 	      begin
@@ -55,25 +52,12 @@ module Ohana
 	
 	      trap('EXIT') { acceptor.close }
 	
+        # fork workers ('children')
 	      workers.times do
-	        fork do
-	          trap('INT') { exit }
-	
-	          puts "child #$$ accepting on shared socket (#@host:#@port)"
-			      loop {
-			        sock, addr = acceptor.accept
-	            begin
-                sock.puts @process.deliver(Ohana::Message.parse(sock.gets))
-	            rescue => e
-	              exception sock, e
-	            end
-			        sock.close
-	            #puts "child #$$: #{req.inspect}"
-			      }
-	          exit
-	        end
+          fork_worker(acceptor)
 	      end
 
+        # kill all children for a clean exit
 	      trap('INT') { 
           puts "\ngoing down..."
           exit
@@ -81,6 +65,27 @@ module Ohana
 
 	      ::Process.waitall
 	    end
+
+      private
+
+      def fork_worker(acceptor)
+        fork do
+          trap('INT') { exit }
+
+          puts "child #$$ accepting on shared socket (#@host:#@port)"
+		      loop {
+		        sock, addr = acceptor.accept
+            begin
+                sock.puts @process.deliver(Ohana::Message.parse(sock.gets))
+            rescue => e
+              exception sock, e
+            end
+		        sock.close
+		      }
+          exit
+        end
+      end
+
     end
   end
 end

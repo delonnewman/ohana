@@ -10,6 +10,6 @@ module Ohana
 
   def self.run(args)
     @@debug = args[:debug]
-    Messenger.new
+    Messenger.new.spawn
   end
 end

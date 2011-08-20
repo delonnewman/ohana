@@ -10,16 +10,12 @@ require 'dispatcher'
 
 module Ohana
   class Messenger < Process
-    adapter :preforker, :workers => 5
-
-    def initialize
-      super()
-      await # enters await mode upon initialization 
-    end
+    adapter :preforker, :port => 3141
 
     receive :route do |msg|
-      Dispatcher.dispatch(msg)
+      puts "receiving: #{msg.inspect} on :route"
+      res = Dispatcher.dispatch(Message.new(msg['to'], msg['channel'], msg['content']))
+      puts "from #{msg['to'].inspect}: #{res.inspect}"
     end
-
   end
 end

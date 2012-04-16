@@ -6,31 +6,31 @@ require 'json'
 
 module RequestTestHelpers
   module ClassMethods
-	  def method meth
+    def method meth
       define_method :test_method do
         assert_equal meth, @req.method
       end
-	  end
-	
-	  def type type
+    end
+  
+    def type type
       define_method :test_type do
         assert_instance_of type, @req
       end
-	  end
-	
-	  def prop name, type, value=nil
+    end
+  
+    def prop name, type, value=nil
       if value
-		    define_method :"test_#{name}" do
-		      assert_equal value, @req.send(name.to_sym)
-		    end
+        define_method :"test_#{name}" do
+          assert_equal value, @req.send(name.to_sym)
+        end
       end
-		
+    
       if type
-		    define_method :"test_#{name}" do
-		      assert_instance_of type, @req.send(name.to_sym)
-		    end
+        define_method :"test_#{name}" do
+          assert_instance_of type, @req.send(name.to_sym)
+        end
       end
-	  end
+    end
   end
 
   def self.included(klass)
@@ -44,31 +44,31 @@ end
 
 module ResponseTestHelpers
   module ClassMethods
-	  def status stat
+    def status stat
       define_method :test_status do
         assert_equal stat, @res.status
       end
-	  end
-	
-	  def type type
+    end
+  
+    def type type
       define_method :test_type do
         assert_instance_of type, @res
       end
-	  end
-	
-	  def prop name, type, value=nil
+    end
+  
+    def prop name, type, value=nil
       if value
-		    define_method :"test_#{name}" do
-		      assert_equal value, @res.send(name.to_sym)
-		    end
+        define_method :"test_#{name}" do
+          assert_equal value, @res.send(name.to_sym)
+        end
       end
-		
+    
       if type
-		    define_method :"test_#{name}" do
-		      assert_instance_of type, @res.send(name.to_sym)
-		    end
+        define_method :"test_#{name}" do
+          assert_instance_of type, @res.send(name.to_sym)
+        end
       end
-	  end
+    end
   end
 
   def self.included(klass)

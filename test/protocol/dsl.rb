@@ -7,17 +7,17 @@ module TestDSL
   end
   def test_response_parse
     if @res
-	    assert_nothing_raised do
-	      Ohana::Protocol::Response.parse(@res.to_json)
-	    end
+      assert_nothing_raised do
+        Ohana::Protocol::Response.parse(@res.to_json)
+      end
     end
   end
 
   def test_request_parse
     if @req
-	    assert_nothing_raised do
-	      Ohana::Protocol::Request.parse(@req.to_json)
-	    end
+      assert_nothing_raised do
+        Ohana::Protocol::Request.parse(@req.to_json)
+      end
     end
   end
 end

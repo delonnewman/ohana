@@ -37,40 +37,40 @@ module Ohana
       fetch(msg.process).send_msg(msg.channel, msg.content)
     end
 
-	  class Store
-	    include DataMapper::Resource
-	
-	    property :id,         Serial,        :key => true
+    class Store
+      include DataMapper::Resource
+  
+      property :id,         Serial,        :key => true
       property :name,       String,        :required => true, :unique => true
-	    property :type,       Discriminator, :required => true
-	    property :uri,        String
-	    property :spec,       Json
-	    property :version,    String,        :required => true, :default => 1
+      property :type,       Discriminator, :required => true
+      property :uri,        String
+      property :spec,       Json
+      property :version,    String,        :required => true, :default => 1
 
       before :save do
         if !@uri && !@spec
           raise ProcessStoreError, "URI or Spec must be specified: uri: #{@uri}, spec: #{@spec}"
         end
       end
-	
-	    def spec
-	      @scache ||= if @spec then ::Ohana::Protocol::ProcessSpec.parse(@spec)
-	                  else
-	                    # fetch from spec_uri
-	                    update(:spec => JSON.parse(Net::HTTP.get(URI.parse(uri))))
-	                    ::Ohana::Protocol::ProcessSpec.dispatch(@spec)
-	                  end
-	    end
+  
+      def spec
+        @scache ||= if @spec then ::Ohana::Protocol::ProcessSpec.parse(@spec)
+                    else
+                      # fetch from spec_uri
+                      update(:spec => JSON.parse(Net::HTTP.get(URI.parse(uri))))
+                      ::Ohana::Protocol::ProcessSpec.dispatch(@spec)
+                    end
+      end
 
       def channels; spec.channels end
-	
-	    def send_msg(channel, message)
+  
+      def send_msg(channel, message)
         # TODO: needs authentication key to receive messages
-	      if not channels.include?(channel)
-	        raise ProcessStoreError, "Invalid channel: #{name} process does not have channel " + 
-	          "#{channel}: #{channels.join(', ')} are valid."
-	      end
-	    end
+        if not channels.include?(channel)
+          raise ProcessStoreError, "Invalid channel: #{name} process does not have channel " + 
+            "#{channel}: #{channels.join(', ')} are valid."
+        end
+      end
 
       def to_json
         { :id       => id,
@@ -80,21 +80,21 @@ module Ohana
           :spec     => spec,
           :version  => version  }.to_json
       end
-	  end
+    end
 
-	
-	  class RESTful < Store
-		  def send_msg(channel, message)
+  
+    class RESTful < Store
+      def send_msg(channel, message)
         super(channel, message)
         if spec.respond_to?(:root_uri)
-	        res = Net::HTTP.post_form URI.parse("#{spec.root_uri}/channel/#{channel}"), 
+          res = Net::HTTP.post_form URI.parse("#{spec.root_uri}/channel/#{channel}"), 
                                     { :message => message }
           res.body
         else
           raise ProcessStoreError, "spec must contain 'root_uri'"
         end
-	    end
-	  end
+      end
+    end
 
     class Script < Store
       def send_msg(channel, message)

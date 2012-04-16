@@ -19,12 +19,12 @@ module Ohana
       
       def self.dispatch(h)
         h = hash_keys_to_sym h
-	      statuses = {
-	        'AWAIT'      => lambda { |h| Await.new(h) },
-	        'NORESPONSE' => lambda { |h| NoResponse.new(h) },
-	        'ERROR'      => lambda { |h| Error.new(h) },
+        statuses = {
+          'AWAIT'      => lambda { |h| Await.new(h) },
+          'NORESPONSE' => lambda { |h| NoResponse.new(h) },
+          'ERROR'      => lambda { |h| Error.new(h) },
           'OK'         => lambda { |h| OK.new(h) }
-	      }
+        }
 
         status = h[:status]
 
@@ -110,18 +110,18 @@ module Ohana
         def content
           if @ccontent then @ccontent
           else
-	          content_types = {
-	            'String'    => lambda { @content.to_json },
-	            'Process'   => lambda { Process.new(@content) },
-	            '[Process]' => lambda { @content.map { |p| Process.new(hash_keys_to_sym p) } }
-	          }
-	
-	          unless (types = content_types.keys).include?(@content_type)
-	            raise ResponseError, "'#{@content_type}' is invalid, " +
-	              "'#{types.join(', ')}' are valid content types."
-	          end
-	
-	          @ccontent = content_types[@content_type].call
+            content_types = {
+              'String'    => lambda { @content.to_json },
+              'Process'   => lambda { Process.new(@content) },
+              '[Process]' => lambda { @content.map { |p| Process.new(hash_keys_to_sym p) } }
+            }
+  
+            unless (types = content_types.keys).include?(@content_type)
+              raise ResponseError, "'#{@content_type}' is invalid, " +
+                "'#{types.join(', ')}' are valid content types."
+            end
+  
+            @ccontent = content_types[@content_type].call
           end
         end
       end

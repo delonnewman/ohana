@@ -13,12 +13,12 @@ module Ohana
 
       METHODS = %w{ SEND LIST ADD GET REMOVE }.freeze
       @@method_dispatch = {
-	      METHODS[0] => lambda { |h| Send.new(h) },
-	      METHODS[1] => lambda { |h| List.new(h) },
-	      METHODS[2] => lambda { |h| Add.new(h) },
-	      METHODS[3] => lambda { |h| Get.new(h) },
-	      METHODS[4] => lambda { |h| Remove.new(h) }
-	    }
+        METHODS[0] => lambda { |h| Send.new(h) },
+        METHODS[1] => lambda { |h| List.new(h) },
+        METHODS[2] => lambda { |h| Add.new(h) },
+        METHODS[3] => lambda { |h| Get.new(h) },
+        METHODS[4] => lambda { |h| Remove.new(h) }
+      }
 
       def self.dispatch(h)
         h = hash_keys_to_sym h

@@ -5,23 +5,23 @@ module Ohana
   module Protocol
     module Parser
       module ClassMethods
-	      def dispatch(hash)
-	        new(hash_keys_to_sym(hash))
-	      end
-	
-	      def parse(json)
-	        hash = begin
-	          JSON.parse(json)
-	        rescue => e
-	          raise ProtocolError, e
-	        end
-	        
-	        unless hash.respond_to?(:[]) && hash.respond_to?(:keys)
-	          raise ProtocolError, "It doesn't seem like the message was parsed correctly"
-	        end
+        def dispatch(hash)
+          new(hash_keys_to_sym(hash))
+        end
+  
+        def parse(json)
+          hash = begin
+            JSON.parse(json)
+          rescue => e
+            raise ProtocolError, e
+          end
+          
+          unless hash.respond_to?(:[]) && hash.respond_to?(:keys)
+            raise ProtocolError, "It doesn't seem like the message was parsed correctly"
+          end
 
           dispatch(hash)
-	      end
+        end
       end
 
       def self.included(klass)

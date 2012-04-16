@@ -19,7 +19,7 @@ module Ohana
       kidpid = fork
 
       if kidpid
-	      # parent copies the socket to standard output
+        # parent copies the socket to standard output
         out = sock.gets.to_s.chomp
         Process.kill 'TERM', kidpid
         begin
@@ -28,7 +28,7 @@ module Ohana
           client_error("#{e.class}: #{e.message}")
         end
       else
-	      # child copies standard input to the socket
+        # child copies standard input to the socket
         sock.write "#{req}\n"
         exit
       end
